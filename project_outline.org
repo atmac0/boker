@@ -1,0 +1,33 @@
+LIST OF REQUIREMENTS TO HAVE THIS THING WORK:
+
+* TODO poker simulator
+** TODO a poker game simulator is needed to deal out up to 9 players.
+
+** DONE Deck management
+*** DONE A deck shall contain 52 cards of Ace-King, 4 suits, indexable by array
+*** DONE A deck shall contain a method to shuffle the deck
+*** DONE A deck shall contian a method to retreive the next card in the deck
+
+** TODO declaring a winner
+*** TODO The rank of a players hand shall be made known by an integer, starting from 0 for the highest ranking hand counting up by 1 for each subsequent non-folded player
+
+** TODO play
+*** TODO the holdem game object shall maintain full knowledge of all the cards which have been dealt in the game
+**** TODO the holdem game object shall make available the rank and suit of both cards dealt to a player
+*** TODO the holdem game object shall maintain knowledge of 
+*** TODO The big and small blind players must place their bets before being dealt their hand
+*** TODO Each player shall have the opportunity to bet before the flop, before the turn, before the river, and after the river.
+
+** TODO money management
+*** TODO the holdem game object shall maintain the magnitude of the cash stack available to each player
+*** TODO the holdem game object shall reassign cash stack values as players request bets
+*** TODO the holdem game object shall require the minimum bet to be equal to or greater than the big blind
+
+* player simulator
+** TODO Hand management
+*** TODO Each player shall have knowledge of the suit and rank of all cards dealt to their hand
+*** TODO Each player shall have knowledge of the suit and rank of all cards dealt to the flop, turn, and river
+*** TODO Each player shall have two card cards dealt to their hand
+** TODO Money management
+*** TODO Each player shall have knowledge of the magnitude of their cash stack
+*** TODO Each player shall have knowledge of the magnitude of each opponents cash stack
