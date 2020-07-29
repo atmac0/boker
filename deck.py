@@ -5,11 +5,11 @@ class Card:
         self.suit = suit
         self.rank = rank
 
-    def suit(self):
-        return self.suit
+        #def suit(self):
+        #return self.suit
 
-    def rank(self):
-        return self.rank
+        #def rank(self):
+        #return self.rank
 
 class Deck:
 
@@ -45,7 +45,7 @@ class Deck:
         self.deck_counter = 0
         random.shuffle(self.deck)
         
-
+ 
     def draw(self):
         card = self.deck[self.deck_counter]
         self.deck_counter = self.deck_counter + 1
