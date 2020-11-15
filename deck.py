@@ -4,20 +4,27 @@ class Card:
     def __init__(self, suit, rank):
         self.suit = suit
         self.rank = rank
+        
+    # string will be a unique value formatted as four numbers, representing suit/rank. For example, a jack (10) of hearts (3) will be represented as 1003
+    def to_string(self):
+        
+        if(self.suit < 10):
+            suit_string = '0' + str(self.suit)
+        else:
+            suit_string = str(self.suit)
 
-        #def suit(self):
-        #return self.suit
+        card_string = suit_string + '0' + str(self.rank)
 
-        #def rank(self):
-        #return self.rank
-
+        return card_string
+        
 class Deck:
 
-    def __init__(self):
+    def __init__(self, shuffle=True):
         
         self.deck = []
         self.init_deck()
-        self.shuffle()
+        if(shuffle):
+            self.shuffle()
 
         # current location in deck
         self.deck_counter = 0
@@ -29,7 +36,7 @@ class Deck:
         
         #ace is 0, king is 13. hand evaluater will handle ace being both high and low
         for rank in range(0, 13):
-            #0: spade, 1: club, 2: diamons, 3: hearts
+            #0: spade, 1: club, 2: diamonds, 3: hearts
             for suit in range(0,4):
                 card = Card(suit, rank)
                 deck.append(card)
