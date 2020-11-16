@@ -1,6 +1,9 @@
 from math import *
 from itertools import *
+import operator
 
+BIG_BLIND = 2
+LITTLE_BLIND = 1
 NUM_CARDS_IN_DECK = 52
 
 class Node:
@@ -84,9 +87,9 @@ class Node:
             if(bet == -1):
                 next_players_in_game = self.players_in_game.copy()
                 next_players_in_game[self.acting_player] = False
-                self.children[str(bet)] = Node(next_history, self.exploration_weight, next_players_in_game, 
-            
-            self.children[str(bet)] = Node(next_history, self
+                self.children[str(bet)] = Node(next_history, self.exploration_weight, next_players_in_game)
+            else:
+                self.children[str(bet)] = Node(next_history, self.exploration_weight, self.players_in_game)
         
 
         
@@ -236,20 +239,50 @@ class Node:
                 raise Exception("ERROR IN CALCULATING CURRENT ROUND\nNUMBER OF CARDS DRAWN: " + str(num_cards_drawn) + "\nBETTING ROUND == " + str(self.betting_round))
         
     
-    # calculate all valid bets based on the history. This will be some multiple of the big blind
+    # calculate all valid bets based on the history. This will be some multiple of the big blind. -1 is a fold
     def calculate_valid_bets(self):
-        pass
         
+        minimum_bet = self.minimum_bet()
+
+        valid_bets = [-1, minimum_bet]
         
-        # get just the betting history for this round. If a player has folded this round, they are no longer in the round, and should not be included for betting.
-        nodes_in_round = []
-        for node in reversed(self.history):
-            if(node.betting_round = False):
-                break
-            if(self.players_in_game[node.acting_player]):
-                nodes_in_round.append(node)
+        if(self.num_bets_since_draw() < 4):
+            can_raise = True
+        else:
+            can_raise = False
 
+        if(can_raise == False):
+            return valid_bets
+            
+        if(minimum_bet == LITTLE_BLIND):
+            valid_bets.append(LITTLE_BLIND + BIG_BLIND)
+        elif(minimum_bet == BIG_BLIND):
+            valid_bets.append(BIG_BLIND * 2)
+            
+        return valid_bets
+    
 
+    def minimum_bet(self):
+        bet_sums = self.sum_bets_in_round()
+            
+        maximum_bet = max(bet_sums.iteritem(), key=operator.itemgetter(1))[0]
+        acting_player_bet = bet_sums[str(self.acting_player)]
+
+        minimum_bet = maximum_bet - acting_player_bet
+
+        assert minimum_bet >= 0
+        
+        return minimum_bet
+    
+
+    # returns a list, of which each element is a player number for each player still in the game
+    def get_player_list(self):
+        player_list = []
+        for player_num in range(0, len(self.players_in_game)):
+            if(self.players_in_game[player_num] == True):
+                player_list.append(player_num)
+        return player_list
+                
     # calculate all cards that can be drawn based on the history
     # returns a list of all remaining cards
     def calculate_valid_draws(self):
