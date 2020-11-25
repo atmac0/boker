@@ -2,6 +2,8 @@ from math import *
 from itertools import *
 import operator
 
+import random
+
 BIG_BLIND = 2
 LITTLE_BLIND = 1
 NUM_CARDS_IN_DECK = 52
@@ -15,7 +17,7 @@ class Node:
     #       flop, turn, river  - boolean values describing if the game has made it past the flop, the turn, or the river.
     #       bet_made           - integer value representing bet made by acting player
     #       card_drawn         - card object representing card drawn
-    def __init__(self, history, exploration_weight, players_in_game):
+    def __init__(self, history, exploration_weight, players_in_game, bet_made=None, card_drawn=None):
         self.history               = history
         self.exploration_weight    = exploration_weight
         self.players_in_game       = players_in_game
@@ -23,14 +25,9 @@ class Node:
         
         if(bet_made != None):
             self.bet_made          = bet_made
-            self.betting_node      = True
-            # remove current acting player from the game if they folded
-            if(self.bet_made == -1):
-                self.players_in_game[self.acting_player] =  False
         else:
             assert card_drawn is not None
             self.card_drawn    = card_drawn
-            self.betting_node  = False
 
         self.num_players_in_game = get_num_players_in_game()
         
@@ -40,8 +37,7 @@ class Node:
 
         self.children = None
 
-        self.current_round_string = self.get_current_round()
-        self.next_round_string    = self.get_next_round_string()
+        self.current_round_string = self.get_current_round_string()
 
 
     # find current acting player by counting up from the previous acting player until you hit the next player still in the game
@@ -61,11 +57,10 @@ class Node:
         pass
 
     def make_children(self):
-        next_round_string = self.get_next_round_string()
         
-        if('betting' in next_round_string):
+        if('betting' in self.current_round_string):
             self.make_children_betting()
-        elif('draw' in next_round_string):
+        elif('draw' in self.current_round_string):
             self.make_children_drawing()
         else:
             raise Exception('ERROR IN MAKING CHILDREN. ILLEGAL CHILD: ' + next_round_string)
@@ -75,10 +70,9 @@ class Node:
             self.make_children()
 
         return self.children
-
+    
     def make_children_betting(self):
         self.children = dict()
-        next_round_string = self.get_next_round_string()
         valid_bets = self.calculate_valid_bets()
 
         for(bet in valid_bets):
@@ -87,9 +81,9 @@ class Node:
             if(bet == -1):
                 next_players_in_game = self.players_in_game.copy()
                 next_players_in_game[self.acting_player] = False
-                self.children[str(bet)] = Node(next_history, self.exploration_weight, next_players_in_game)
+                self.children[str(bet)] = Node(next_history, self.exploration_weight, next_players_in_game, bet_made=bet)
             else:
-                self.children[str(bet)] = Node(next_history, self.exploration_weight, self.players_in_game)
+                self.children[str(bet)] = Node(next_history, self.exploration_weight, self.players_in_game, bet_made=bet)
         
 
         
@@ -101,7 +95,7 @@ class Node:
             card_string = card.to_string()
 
             next_history = self.history.append(self)
-            self.children[card_string] = Node(next_history, self.exploration_weight, self.players_in_game)
+            self.children[card_string] = Node(next_history, self.exploration_weight, self.players_in_game, card_drawn=card)
         
     def next_acting_player(self):
         player_counter = self.acting_player
@@ -118,7 +112,7 @@ class Node:
         raise Exception("COULD NOT FIND NEXT ACTING PLAYER, SOMETHING WENT WRONG!")
 
                 
-    def bets_since_draw(self):
+    def bet_nodes_since_draw(self):
         nodes_in_round = []
                 
         for node in reversed(self.history):
@@ -132,7 +126,7 @@ class Node:
         return nodes_in_round
 
     def num_bets_since_draw(self):
-        return len(self.bets_since_draw())
+        return len(self.bet_notes_since_draw())
     
     def get_num_players_in_game(self):
         num_players_in_game = 0
@@ -158,48 +152,15 @@ class Node:
         return cards_drawn
 
     def is_node_terminal(self):
-        if
-    
-    # determine the next round
-    # returns: 'pre_flop_betting'
-    #          'flop_draw'
-    #          'flop_betting'
-    #          'turn_draw'
-    #          'turn_betting'
-    #          'river_draw'
-    #          'river_betting'
-    #          'terminal'
-    # first determine if the flop has been completed. If not, the next round is a drawing round.
-    # then, determine if all players have matched their previous raises.
-    # then, detemine if betting is over. There is up to 1 bet, and 3 raises for each round.
-    # returns terminal if the current node is a terminal node
-    def get_next_round_string(self):
-
+        # if all players but 1 have folded, the game has ended
         if(self.num_players_in_game == 1):
-            return 'terminal'
-        
-        num_cards_drawn = self.num_cards_drawn()  
-        num_bets_since_draw = self.bets_since_draw()
-        is_betting_over = self.did_all_players_match_bet()
+            return True
 
-        if(1 <= num_cards_drawn < 3):
-            return 'flop_draw'
-        
-        if(is_betting_over):
-            if(self.current_round_string == 'pre_flop_betting'):
-                return 'flop_draw'
-            elif(self.current_round_string == 'flop_betting'):
-                return 'turn_draw'
-            elif(self.current_round_string == 'turn_betting'):
-                return 'river_draw'
-            else:
-                return 'terminal'
-        
-        if(num_bets_since_draw < 4):
-            return self.current_round_string
+        # if all players have checked/bet in the river betting round, the game is over
+        if((self.current_round_string == 'river_betting') and self.did_all_players_match_bet()):
+            return True
 
-        raise Exception("ERROR CALCULATING NEXT ROUND. REACHED END OF FUNCTION")
-    
+        return False
         
     # determine the current round
     # returns: "pre_flop_betting"
@@ -209,7 +170,12 @@ class Node:
     #          "turn_betting"
     #          "river_draw"
     #          "river_betting"
-    def get_current_round(self):
+    #          "terminal"
+    def get_current_round_string(self):
+
+        if(self.is_node_terminal()):
+            return 'terminal'
+        
         num_cards_drawn = self.num_cards_drawn()
 
         if(self.betting_round == True):
@@ -265,10 +231,10 @@ class Node:
     def minimum_bet(self):
         bet_sums = self.sum_bets_in_round()
             
-        maximum_bet = max(bet_sums.iteritem(), key=operator.itemgetter(1))[0]
+        maximum_bet_made = max(bet_sums.iteritem(), key=operator.itemgetter(1))[0]
         acting_player_bet = bet_sums[str(self.acting_player)]
 
-        minimum_bet = maximum_bet - acting_player_bet
+        minimum_bet = maximum_bet_made - acting_player_bet
 
         assert minimum_bet >= 0
         
@@ -321,14 +287,14 @@ class Node:
             exit(0)
 
         # fist node represents first bet in round
-        bets_in_round = self.bets_since_draw()
+        bet_nodes_in_round = self.bet_nodes_since_draw()
 
         # if all the players (counting from the start of the round) have yet to have an action, the round cannot be over
-        if(len(bets_in_round) < bets_in_round[0].num_players_in_game):
+        if(len(bet_nodes_in_round) < bet_nodes_in_round[0].num_players_in_game):
             return False
 
         bet_sums = self.sum_bets_in_round()
-
+        
         test_val = list(bet_sums.values())[0]
         
         for bet_sum in bet_sums:
@@ -339,44 +305,15 @@ class Node:
 
     # return a dictionary of the sum of each players bets for the round
     def sum_bets_in_round():
-        bets_in_round = self.bets_since_draw()
+        bet_nodes_in_round = self.bet_nodes_since_draw()
         bet_sums = dict()
         
-        for bet in bets_in_round:
-            bet_sums[str(bet.acting_player)] += bet.bet_made
+        for betting_node in bet_nodes_in_round:
+            if(betting_node.bet_made != -1):
+                bet_sums[str(betting_node.acting_player)] += betting_node.bet_made
 
         return bet_sums
-        
-        
-            
-        
-        
-    # calculate if the next round is a betting round
-    # this is done by adding up all the bets of all acting players in the round, if all values are equal
-    # if 
-    def is_next_round_betting(self):
 
-        num_cards_drawn = self.num_cards_drawn()
-        current_round = self.current_round_string()
-
-        # if current round is turn or river draw, the next round must be betting
-        if( current_round == 'turn_draw' or current_round == 'river_draw' ):
-            return True
-        # if the current round is part of the flop, but not all cards have been draw, the next round must be a draw round
-        if( current_round == 'flop_draw' and num_cards_drawn < 3 ):
-            return False
-                       
-        bets_in_round = self.bets_since_draw()
-        
-        player_bets = [0 for i in self.players_in_games]
-        for node in notes_in_round
-            if(self.players 
-            player_bets[node.acting_player] = node.bet_made
-               
-               
-            
-        for player_boolean in players_in_game:
-            if not player_boolean:
     
     # args: valid_bets - a list of integers of all valid bets
     def do_rollout(self):
@@ -396,6 +333,7 @@ class Node:
             for bet in valid_bets:
                 pass
                 #self.children[str(bet)] = Node(self, self.exploration_weight, self.players_in_game, self.acting_player
+
     # selects a child node for a drawing round based on the least number of visits
     def select_child_draw(self):
         choice = self.children[0]
@@ -426,42 +364,32 @@ class Node:
                 UCB1_of_choice = UCB1
 
         return choice
-                                        
 
-class MCTS:
+    def get_random_child_key(self):
+        if(self.children == None):
+            self.make_children()
 
-    def __init__(self, exploration_weight, layer_type):
-        self.Q         = 0 # total reward of each node
-        self.N         = 0 # total visit count for each node
-        self.layer_type = layer_type # layer type, used for computing children
-        self.visits    = 0
+        return random.choice(self.children.keys())
 
-        self.game_state = {0:"betting1", 1:"preflop", 2:"betting2", 3:"turn", 4:"betting3", 5:"river", 6:"betting4"}
+    def get_child_node_from_key(self, key):
+        if(self.children == None):
+               print("CHILDREN NOT CREATED. CANNOT INDEX FOR KEY")
+               exit(0)
+        return self.children[key]
 
-        do_rollout()
+    def get_random_child_node(self):
+        random_key = self.get_random_child_key()
+        random_child = self.children[random_key]
+        return random_child
 
-
-    def do_rollout(layer):
-        if(self.game_state["betting1"] == self.layer_type):
-            decisions = [1,10,100,1000] # placeholder bet amounts
-            regret = []
-        elif(self.game_state["preflop"] == self.layer_type):
+    def calculate_winner(self, player_hands):
+        for player_num in range(0, len(player_hands)):
             pass
-        elif(self.game_state["betting2"] == self.layer_type):
-            pass
-        elif(self.game_state["turn"] == self.layer_type):
-            pass
-        elif(self.game_state["betting3"] == self.layer_type):
-            pass
-        elif(self.game_state["river"] == self.layer_type):
-            pass
-        elif(self.game_state["betting4"] == self.layer_type):
-            pass        
-
-
+        
+    
 # strategy where player chooses random move/bet
-def strategy_random(node, valid_bets):
-    pass
+def strategy_random(node):
+    return node.get_random_child_node()
                 
 # strategy where player chooses move that minimizes CFR
 def strategy_mcts(node, valid_bets):
