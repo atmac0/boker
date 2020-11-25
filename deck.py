@@ -12,13 +12,8 @@ class Card:
         
     # string will be a unique value formatted as four numbers, representing suit/rank. For example, a jack (10) of hearts (3) will be represented as 1003
     def to_string(self):
-        
-        if(self.suit < 10):
-            suit_string = '0' + str(self.suit)
-        else:
-            suit_string = str(self.suit)
 
-        card_string = suit_string + '0' + str(self.rank)
+        card_string = str(self.suit).zfill(2) + str(self.rank).zfill(2)
 
         return card_string
         

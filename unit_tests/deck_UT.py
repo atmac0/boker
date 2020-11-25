@@ -10,16 +10,17 @@ class Test(Enum):
 
 def card_class_UT():
     UT = Test.PASS
-    to_string_counter = 0
     
     for rank in range(0, NUM_RANKS):
         for suit in range(0, NUM_SUITS):
             test_card = Card(suit, rank)
-
-            if(test_card.to_string() != str(to_string_counter)):
+            
+            test_card_string = test_card.to_string()
+            expected_string = str(suit).zfill(2) + str(rank).zfill(2)
+            
+            if(test_card_string != expected_string):
+                print("card_class_UT failure: expected " + expected_string + ", " + test_card_string + " observed")
                 UT = Test.FAIL
-
-            to_string_counter += 1
 
     if(UT == Test.PASS):
         print("card_class_UT PASS")
@@ -42,10 +43,12 @@ def sort_cards_UT():
         next_card    = sorted_card_list[i+1]
 
         if(current_card.rank > next_card.rank):
+            print("Failure in sort_cards_UT: current card rank: " + str(current_card.rank) + ", next card rank: " + str(next_card.rank))
             UT = Test.FAIL
 
         if(current_card.rank == next_card.rank):
             if(current_card.suit > next_card.suit):
+                print("Failure in sort_cards_UT: rank of both: " + str(current_card.rank) + ", current card suit: " + str(current_card.suit) + ", next card suit: " + str(next_card.suit))
                 UT = Test.FAIL
 
     if(UT == Test.PASS):
