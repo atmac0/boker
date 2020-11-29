@@ -3,11 +3,28 @@ import random
 NUM_SUITS = 4
 NUM_RANKS = 14
 
+ACE_LOW  = 0
+ONE      = 1
+TWO      = 2
+THREE    = 3
+FOUR     = 4
+FIVE     = 5
+SIX      = 6
+SEVEN    = 7
+EIGHT    = 8
+NINE     = 9
+TEN      = 10
+JACK     = 11
+QUEEN    = 12
+KIND     = 13
+ACE_HIGH = 14
+
+
 class Card:
     def __init__(self, suit, rank):
         #0: spade, 1: club, 2: diamonds, 3: hearts
         self.suit = suit
-        #ace is 0, king is 13
+        #ace is 0, king is 13. Ace may also be 14 when being used as a high card
         self.rank = rank
         
     # string will be a unique value formatted as four numbers, representing suit/rank. For example, a jack (10) of hearts (3) will be represented as 1003
@@ -113,50 +130,49 @@ def sort_cards(card_list):
 # 8: straight flush
 def get_hand_rank(hand, public_cards):
     all_cards = hand + public_cards
+    
     sorted_cards = sort_cards(all_cards)
 
-    straight_flush, high_card_rank = is_straight_flush(hand, public_cards)
-    
+    straight_flush, high_card_rank = is_straight_flush(hand[:], public_cards[:])
     if(straight_flush):
         return 8, high_card_rank
 
-    four_of_a_kind, high_card_rank = is_four_of_a_kind(sorted_cards)
-   
+    four_of_a_kind, high_card_rank = is_four_of_a_kind(sorted_cards[:])
     if(four_of_a_kind):
         return 7, high_card_rank
     
-    full_house, high_card_rank = is_full_house(sorted_cards)
-   
+    full_house, high_card_rank = is_full_house(sorted_cards[:])
     if(full_house):
         return 6, high_card_rank
 
-    flush, high_card_rank = is_flush(hand, public_cards)
-   
+    flush, high_card_rank = is_flush(hand[:], public_cards[:])
     if(flush):
         return 5, high_card_rank
 
-    straight, high_card_rank = is_straight(sorted_cards)
-   
+    straight, high_card_rank = is_straight(sorted_cards[:])
     if(straight):
         return 4, high_card_rank
 
-    three_of_a_kind, high_card_rank = is_three_of_a_kind(sorted_cards)
+    three_of_a_kind, high_card_rank = is_three_of_a_kind(sorted_cards[:])
     if(three_of_a_kind):
         return 3, high_card_rank
 
-    two_pair, high_card_rank = is_two_pair(sorted_cards)
+    two_pair, high_card_rank = is_two_pair(sorted_cards[:])
     if(two_pair):
         return 2, high_card_rank
 
-    pair, high_card_rank = is_pair(sorted_cards)
+    pair, high_card_rank = is_pair(sorted_cards[:])
     if(pair):
         return 1, high_card_rank
     
-    return 0, get_high_card(hand)
+    return 0, get_high_card(hand[:])
 
 
 def get_high_card(cards):
     max_rank = cards[0].rank
+
+    if(max_rank == ACE_LOW):
+        return ACE_LOW
     
     for card in cards:
         if(card.rank > max_rank):
@@ -190,6 +206,11 @@ def is_straight_flush(hand, public):
     consecutive_cards = [sorted_flush_cards[0]]
     high_card_rank = None
 
+    # duplicate all aces to be high and low
+    for card in sorted_flush_cards:
+        if(card.rank == 0):
+            sorted_flush_cards.append(Card(card.suit, ACE_HIGH))
+    
     # then, discover if the flush is also a straight
     for i in range(1, len(sorted_flush_cards)):
         if(sorted_flush_cards[i].rank == sorted_flush_cards[i-1].rank + 1):
@@ -206,7 +227,10 @@ def is_straight_flush(hand, public):
 
 
     if(high_card_rank != None):
-        return True, high_card_rank
+        if(high_card_rank == ACE_HIGH):
+            return True, ACE_LOW
+        else:
+            return True, high_card_rank
     
     return False, None
     
@@ -240,7 +264,9 @@ def is_full_house(sorted_cards):
     pair, pair_rank = is_pair(sorted_cards)
 
     if(three_of_a_kind and pair):
-        if(three_of_a_kind_rank > pair_rank):
+        if(three_of_a_kind_rank == ACE_LOW or pair_rank == ACE_LOW):
+            return True, ACE_LOW
+        elif(three_of_a_kind_rank > pair_rank):
             return True, three_of_a_kind_rank
         else:
             return True, pair_rank
@@ -249,15 +275,23 @@ def is_full_house(sorted_cards):
 
 
 # returns True if a TOAK is present. False if not.
-def is_three_of_a_kind(sorted_cards):
+def is_three_of_a_kind(sorted_cards):    
     if(len(sorted_cards) < 3):
         return False, None
     
+    three_of_a_kind_rank = None
+    # iterate over all the cards. If two three of a kinds are present, it will get the rank of the higher TOAK
     for i in range(0, len(sorted_cards) - 2):
         if(sorted_cards[i].rank == sorted_cards[i+1].rank == sorted_cards[i+2].rank):
-            return True, sorted_cards[i].rank
-                
-    return False, None
+            # if TOAK is of rank ace, that is the highest possible rank.
+            if(sorted_cards[i].rank == ACE_LOW):
+                return True, ACE_LOW
+            three_of_a_kind_rank = sorted_cards[i].rank
+
+    if(three_of_a_kind_rank != None):
+        return True, three_of_a_kind_rank
+    else:
+        return False, None
 
 # returns True if a pair is present, along with rank of card if a pair is present. False if not. 
 def is_pair(sorted_cards):
@@ -276,7 +310,7 @@ def is_pair(sorted_cards):
     if(pair_rank != None):
         return True, pair_rank
     else:
-        return False, pair_rank
+        return False, None
 
 # returns True if a pair is present. False if not.
 # determines the rank of the first pair. If a pair of a different rank exists, a two pair exists
@@ -291,17 +325,17 @@ def is_two_pair(sorted_cards):
     
     for i in range(0, len(sorted_cards) - 1):
         if(sorted_cards[i].rank == sorted_cards[i+1].rank):
-            pairs_found += 1
+            pairs_found += 1            
             if(rank_of_high_pair == None):
                 rank_of_high_pair = sorted_cards[i].rank
-            elif(sorted_cards[i].rank > rank_of_high_pair):
+            elif((sorted_cards[i].rank > rank_of_high_pair) and (rank_of_high_pair != ACE_LOW)):
                 rank_of_high_pair = sorted_cards[i].rank
 
 
     if(pairs_found >= 2):
         return True, rank_of_high_pair
     else:
-        return False, rank_of_high_pair
+        return False, None
 
 
 # detemine if a hand is a flush
@@ -328,6 +362,10 @@ def is_flush(hand, public_cards):
     if(flush_suit != None):
         for card in hand:
             if(card.suit == flush_suit):
+                # if an ace is in the flush, that's the high card
+                if(card.rank == 0):
+                    return True, card.rank
+                
                 if(high_card_rank == None):
                     high_card_rank = card.rank
                 elif(card.rank > high_card_rank):
@@ -336,16 +374,20 @@ def is_flush(hand, public_cards):
     if(flush_suit != None):
         return True, high_card_rank
     else:
-        return False, high_card_rank
+        return False, None
 
 def is_straight(sorted_cards):
     if(len(sorted_cards) < 5):
         return False, None
+
+    # duplicate all aces to be high and low
+    for card in sorted_cards:
+        if(card.rank == 0):
+            sorted_cards.append(Card(card.suit, ACE_HIGH))
     
     consecutive_counter = 1
     previous_val = sorted_cards[0].rank
     high_card_rank = None
-
     
     for card in sorted_cards[1:]:
         if(card.rank == previous_val + 1):
@@ -354,15 +396,21 @@ def is_straight(sorted_cards):
             pass
         else:
             consecutive_counter = 1
-
         # since the card list is sorted, each subsequent card that continues the straight is gauranteed to be of a higher rank
         if(consecutive_counter >= 5):
-            high_card_card_rank = card.rank
+            high_card_rank = card.rank
 
         previous_val = card.rank
 
     if(high_card_rank != None):
-        return True, high_card_rank
+        if(high_card_rank == ACE_HIGH):
+            return True, ACE_LOW
+        else:
+            return True, high_card_rank
     else:
-        return False, high_card_rank
+        return False, None
 
+def print_card_list(card_list):
+    print("PRINTING CARD LIST")
+    for card in card_list:
+        print("SUIT: " + str(card.suit) + " , RANK: " + str(card.rank))
