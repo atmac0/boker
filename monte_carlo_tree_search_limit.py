@@ -1,12 +1,16 @@
 from math import *
 from itertools import *
 import operator
+from deck import *
 
 import random
 
 BIG_BLIND = 2
 LITTLE_BLIND = 1
 NUM_CARDS_IN_DECK = 52
+
+DEALER_PLAYER_NUM = -1
+FOLD = -1
 
 class Node:
     # args: history            - array of all nodes to get to this node
@@ -23,13 +27,20 @@ class Node:
         self.players_in_game       = players_in_game
         self.acting_player         = self.find_acting_player()
         
-        if(bet_made != None):
+        # case only for head node
+        if(history == []):
+            self.betting_node = False
+        # case for all betting nodes
+        elif(bet_made != None):
             self.bet_made          = bet_made
+            self.betting_node      = True
+        # case for all drawing nodes
         else:
             assert card_drawn is not None
             self.card_drawn    = card_drawn
-
-        self.num_players_in_game = get_num_players_in_game()
+            self.betting_node  = False
+            
+        self.num_players_in_game = self.get_num_players_in_game()
         
         # positive CRF is a good decision. negative CFR is a bad decision
         self.avg_CFR = 0
@@ -40,9 +51,21 @@ class Node:
         self.current_round_string = self.get_current_round_string()
 
 
+    def get_parent(self):
+        if(self.history == []):
+            return None
+        
+        return self.history[-1]
+        
     # find current acting player by counting up from the previous acting player until you hit the next player still in the game
     def find_acting_player(self):
-        player_counter = self.get_parent().acting_player
+        parent_node = self.get_parent()
+
+        # first player in a new game is always the dealer.
+        if(parent_node == None):
+            return DEALER_PLAYER_NUM
+        
+        player_counter = parent_node.acting_player
 
         num_total_players = len(self.players_in_game)
         
@@ -57,16 +80,25 @@ class Node:
         pass
 
     def make_children(self):
-        
-        if('betting' in self.current_round_string):
+        next_round_type = self.get_next_round_type()
+        print("MAKE CHILDREN: ", next_round_type)
+        if('betting' == next_round_type):
             self.make_children_betting()
-        elif('draw' in self.current_round_string):
+        elif('draw' == next_round_type):
             self.make_children_drawing()
-        else:
-            raise Exception('ERROR IN MAKING CHILDREN. ILLEGAL CHILD: ' + next_round_string)
 
+    def get_next_round_type(self):
+        num_cards_drawn = self.num_cards_drawn()
+
+        # if the initial hand hasn't been dealt, or if the flop hasn't completed
+        if( (num_cards_drawn < 2) or (3 <= num_cards_drawn < 5) ):
+            return 'draw'
+        if(self.did_all_players_match_bet()):
+            return 'draw'
+        return 'betting'
+        
     def get_children(self):
-        if(self.children is None):
+        if(self.children == None):
             self.make_children()
 
         return self.children
@@ -75,18 +107,24 @@ class Node:
         self.children = dict()
         valid_bets = self.calculate_valid_bets()
 
-        for(bet in valid_bets):
+        for bet in valid_bets:
             next_history = self.history.append(self)
 
-            if(bet == -1):
+            if(bet == FOLD):
                 next_players_in_game = self.players_in_game.copy()
                 next_players_in_game[self.acting_player] = False
                 self.children[str(bet)] = Node(next_history, self.exploration_weight, next_players_in_game, bet_made=bet)
             else:
                 self.children[str(bet)] = Node(next_history, self.exploration_weight, self.players_in_game, bet_made=bet)
         
-
+    def get_valid_bets(self):
+        assert self.betting_node == True
         
+        if(self.children == None):
+            self.make_children()
+
+        return self.children.keys()
+            
     def make_children_drawing(self):
         self.children = dict()
         remaining_deck = self.calculate_valid_draws()
@@ -94,7 +132,10 @@ class Node:
         for card in remaining_deck:
             card_string = card.to_string()
 
-            next_history = self.history.append(self)
+            # make a copy of the history and append the current node to it
+            next_history = self.history.copy()
+            next_history.append(self)
+            
             self.children[card_string] = Node(next_history, self.exploration_weight, self.players_in_game, card_drawn=card)
         
     def next_acting_player(self):
@@ -116,7 +157,7 @@ class Node:
         nodes_in_round = []
                 
         for node in reversed(self.history):
-            if(node.betting_round = False):
+            if(node.betting_round == False):
                 break
             nodes_in_round.append(node)
 
@@ -131,7 +172,7 @@ class Node:
     def get_num_players_in_game(self):
         num_players_in_game = 0
         
-        for player in self.num_players_in_game:
+        for player in self.players_in_game:
             if(player):
                 num_players_in_game += 1
 
@@ -145,9 +186,12 @@ class Node:
     # returns a list of the cards drawn
     def cards_drawn(self):
         cards_drawn = []
-        for node in self.history:
-            if(node.betting_node == False):
-                cards_drawn.append(node.card_drawn)
+
+        # search all history excluding the head node
+        if(len(self.history) != 0):
+            for node in self.history[1:]:
+                if(node.betting_node == False):
+                    cards_drawn.append(node.card_drawn)
 
         return cards_drawn
 
@@ -157,8 +201,9 @@ class Node:
             return True
 
         # if all players have checked/bet in the river betting round, the game is over
-        if((self.current_round_string == 'river_betting') and self.did_all_players_match_bet()):
-            return True
+        if(len(self.history) != 0):
+            if((self.history[-1].current_round_string == 'river_betting') and self.did_all_players_match_bet()):
+                return True
 
         return False
         
@@ -178,8 +223,11 @@ class Node:
         
         num_cards_drawn = self.num_cards_drawn()
 
-        if(self.betting_round == True):
-            elif(num_cards_drawn == 0):
+        if(num_cards_drawn < 2):
+            return 'pre_flop_draw'
+        
+        if(self.betting_node == True):
+            if(num_cards_drawn == 0):
                 return 'pre_flop_betting'
             elif(num_cards_drawn == 3):
                 return 'flop_betting'
@@ -188,7 +236,7 @@ class Node:
             elif(num_cards_drawn == 5):
                 return 'river_betting'
             else:
-                raise Exception("ERROR IN CALCULATING CURRENT ROUND\nNUMBER OF CARDS DRAWN: " + str(num_cards_drawn) + "\nBETTING ROUND == " + str(self.betting_round))
+                raise Exception("ERROR IN CALCULATING CURRENT ROUND\nNUMBER OF CARDS DRAWN: " + str(num_cards_drawn) + "\nBETTING ROUND == " + str(self.betting_node))
 
         else:
             if(num_cards_drawn == 0):
@@ -202,7 +250,7 @@ class Node:
             elif(num_cards_drawn == 4):
                 return 'river_draw'
             else:
-                raise Exception("ERROR IN CALCULATING CURRENT ROUND\nNUMBER OF CARDS DRAWN: " + str(num_cards_drawn) + "\nBETTING ROUND == " + str(self.betting_round))
+                raise Exception("ERROR IN CALCULATING CURRENT ROUND\nNUMBER OF CARDS DRAWN: " + str(num_cards_drawn) + "\nBETTING ROUND == " + str(self.betting_node))
         
     
     # calculate all valid bets based on the history. This will be some multiple of the big blind. -1 is a fold
@@ -210,7 +258,7 @@ class Node:
         
         minimum_bet = self.minimum_bet()
 
-        valid_bets = [-1, minimum_bet]
+        valid_bets = [FOLD, minimum_bet]
         
         if(self.num_bets_since_draw() < 4):
             can_raise = True
@@ -257,14 +305,15 @@ class Node:
         deck = deck.deck
 
         drawn_cards = 0
-        
+
+        # remove each card already drawn via search. This could be improved, as the deck is ordered
         for node in self.history:
-            if(node.betting_node = False):
+            if(node.betting_node == False):
                 drawn_cards += 1
                 for card in deck:
                     if((node.card_drawn.suit == card.suit) and (node.card_drawn.rank == card.rank)):
-                       deck.remove(card)
-                       break
+                        deck.remove(card)
+                        break
 
         assert len(deck) == (NUM_CARDS_IN_DECK - drawn_cards)
 
@@ -309,30 +358,24 @@ class Node:
         bet_sums = dict()
         
         for betting_node in bet_nodes_in_round:
-            if(betting_node.bet_made != -1):
+            if(betting_node.bet_made != FOLD):
                 bet_sums[str(betting_node.acting_player)] += betting_node.bet_made
 
         return bet_sums
 
+    # get the total current pot size
+    def get_pot(self):
+        pot = 0
+        
+        for node in self.history:
+            if(node.betting_node):
+                if(node.bet_made != FOLD):
+                    pot += node.bet_made
+
+        return pot
     
-    # args: valid_bets - a list of integers of all valid bets
     def do_rollout(self):
-        self.visits += 1
-
-        if(self.is_betting_round()):
-            choices = self.calculate_valid_bets()
-            
-        else: # dealer round
-            choices = self.calculate_valid_draws()
-        
-        
-        if(len(self.children) == 0):
-
-            
-            
-            for bet in valid_bets:
-                pass
-                #self.children[str(bet)] = Node(self, self.exploration_weight, self.players_in_game, self.acting_player
+        pass
 
     # selects a child node for a drawing round based on the least number of visits
     def select_child_draw(self):
@@ -373,11 +416,14 @@ class Node:
 
     def get_child_node_from_key(self, key):
         if(self.children == None):
-               print("CHILDREN NOT CREATED. CANNOT INDEX FOR KEY")
-               exit(0)
+            self.make_children()
+            
         return self.children[key]
 
     def get_random_child_node(self):
+        if(self.children == None):
+            self.make_children()
+            
         random_key = self.get_random_child_key()
         random_child = self.children[random_key]
         return random_child
@@ -386,11 +432,41 @@ class Node:
         for player_num in range(0, len(player_hands)):
             pass
         
-    
 # strategy where player chooses random move/bet
-def strategy_random(node):
-    return node.get_random_child_node()
+def strategy_random(node, cash_stacks):
+    valid_bets = node.get_valid_bets()
+    print(valid_bets)
+    exit(0)
+    
+    next_node = node.get_random_child_node()
+    
+    if(next_node.bet_made == FOLD):
+        print("Player " + str(node.acting_player) + " folded.")
+    else:
+        print("Player " + str(node.acting_player) + " made a bet of " + str(next_node.bet_made))
+        
+    return next_node
                 
 # strategy where player chooses move that minimizes CFR
 def strategy_mcts(node, valid_bets):
     pass
+
+def strategy_dealer(node, card):
+    card_string = card.to_string()
+    return node.get_child_node_from_key(card_string)
+
+# get an input from the user for the next choice
+def strategy_user_input(node, cash_stacks):
+    valid_bets = node.get_valid_bets()
+
+    print("Please enter a valid bet. The bets available are: ", valid_bets)
+    print("You have a cash stack of ", cash_stacks[node.acting_player])
+    
+    user_input = input("Bet: ")
+
+    while(user_input not in valid_bets):
+        user_input = input("Invalid choice: ")
+
+    next_node = node.get_child_node_from_key(user_input)
+
+    return next_node
