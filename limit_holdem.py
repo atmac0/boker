@@ -8,12 +8,16 @@ FOLD         = -1
 
 class Player:
 
-    def __init__(self):
+    def __init__(self, player_num):
         self.hand        = None
+        self.hand_rank   = None
         self.folded      = False
-        self.loser       = False
+        self.winner      = False
         self.checked     = False
         self.bet         = 0
+        self.cash        = 50 * BIG_BLIND
+        self.number      = player_num
+
 
 # the game works like this
 # each time an action is made, the game phase transitions to the next phase, and the next acting player is set.
@@ -23,7 +27,9 @@ class Limit_Holdem:
 
     def __init__(self, num_players):
         self.num_players   = num_players
-        self.players       = [Player() for i in range(0, self.num_players)]
+        self.players       = [Player(i) for i in range(0, self.num_players)]
+        self.acting_player = 0
+        self.players_remaining = num_players
         
         self.pot           = 0
         self.contribution  = 0 # current value all players need to contribute/have contibuted
@@ -40,29 +46,26 @@ class Limit_Holdem:
         self.bet_counter = 0
 
         self.game_complete = False
+        self.ended_in_tie  = False
+
+        self.deal_hands()
         
     # deal the hands. Make players pay the blinds.
     def deal_hands(self):        
-        for player_num in range(0, self.num_players):
+        for player in self.players:
             # each hand is a tuple of 2 cards
-            self.players.hand = (self.deck.draw(), self.deck.draw())
-
-    # get the hand of a specific player
-    def get_hand(self, player_num):
-        return self.players[player_num].hand
+            hand = [self.deck.draw(), self.deck.draw()]
+            hand = sort_cards(hand)
+            player.hand = tuple(hand)
             
     def deal_community(self):
-        num_community = len(self.community_cards)
-
         # deal flop
         if(self.game_phase == 'preflop'):
-            self.flop = [self.deck.draw(), self.deck.draw(), self.deck.draw()]
-            self.flop = sort_cards(self.flop)
-
+            self.flop = sort_cards([self.deck.draw(), self.deck.draw(), self.deck.draw()])
             self.game_phase = 'flop'
             
         # deal turn 
-        elif(self.game_phase == 'turn'):
+        elif(self.game_phase == 'flop'):
             self.turn = self.deck.draw()
             self.game_phase = 'turn'
             
@@ -70,29 +73,91 @@ class Limit_Holdem:
         elif(self.game_phase == 'turn'):
             self.river = self.deck.draw()
             self.game_phase = 'river'
-        elif(self.game_phase == 'river'):
-            self.game_complete = True
-            self.calculate_winner()
         else:
             print('Error dealing cards, unexpected game phase of: ' + self.game_phase)
 
+    # get all the cards a certain player has not seen
+    def get_undrawn_cards(self, player_num):
+        hand = self.players[player_num].hand
+        public = self.flop.copy()
+
+        if(self.turn != None):
+            public.append(self.turn)
+        if(self.river != None):
+            public.append(self.river)
+
+        total_seen = hand + public
+
+        deck = Deck(shuffle=False).deck
+
+        
+            
+    # check if all but 1 players have folded
+    def have_all_but_one_folded(self):
+        non_folded_counter = 0 # number of players still in game
+        
+        for player in self.players:
+            if(player.folded == False):
+                non_folded_counter += 1
+
+        if(non_folded_counter == 0):
+            print("Error: all players have folded")
+            exit(0)
+        elif(non_folded_counter == 1):
+            return True
+        else:
+            return False
+            
     # calculate the winner of the game. Find the rank and highcard of each players hand. The player with the highest rank wins. If two players tie in rank, player with the high card wins. If the high card ties, the game is a tie
     def calculate_winner(self):
-        player_hand_ranks = []
-        player_highcards  = []
+        winning_player_rank      = None
+        winning_player_high_card = None
+        winning_players = []
+        
         public_cards = self.flop + [self.turn] + [self.river]
 
-        for player in self.players:
+        for player_num in range(0, len(self.players)):
+            player = self.players[player_num]
+            
             if(player.folded):
-                player_hand_ranks.append(FOLD)
-                player_highcards.append(None)
-            else:
-                rank, highcard = get_hand_rank(player.hand, public_cards)
-                player_hand_ranks.append(rank)
-                player_highcards.append(highcard)
+                pass
 
-        winning_hand_rank = max(player_hand_ranks)
-        
+            rank, highcard = self.get_hand_rank(list(player.hand), public_cards)
+            # no other players have been considered
+            if(winning_player_rank == None):
+                winning_player_rank      = rank
+                winning_player_high_card = highcard
+                winning_players          = [player_num]
+
+            # current player has a better rank than the previous highest
+            elif(rank > winning_player_rank):
+                winning_player_rank      = rank
+                winning_player_high_card = highcard
+                winning_players          = [player_num]
+
+            # current player has the same rank as the previous highest
+            elif(rank == winning_player_rank):
+                # if the player has the high card, they win over the other player
+                if(highcard > winning_player_high_card):
+                    winning_player_rank      = rank
+                    winning_player_high_card = highcard
+                    winning_players          = [player_num]
+                    
+                # if the player has a matching rank and highcard, consider them for a tie. They need to be considered as another play may also tie, or outrank them and win.
+                elif(highcard == winning_player_high_card):
+                    winning_players.append(player_num)
+                        
+        self.set_winner(winning_players)
+
+        if(len(winning_players) > 1):
+            self.ended_in_tie = True
+
+    def set_winner(self, winning_players):
+        for player_num in range(0, len(self.players)):
+            if(player_num in winning_players):
+                self.players[player_num].winner = True
+            else:
+                self.players[player_num].winner = False
         
     def check(self, player_num):
         self.players[player_num].checked = True
@@ -101,60 +166,138 @@ class Limit_Holdem:
         for player in self.players:
             player.checked = False
 
-    def raise_bet(self, player_num, raise_size):
-        pass
+    def set_players_remaining(self):
+        player_counter = 0
 
+        for player in self.players:
+            if(player.folded == False):
+                player_counter += 1
+
+        self.players_remaining = player_counter
+
+    # finds the next non-folded player, sets the acting player to that player
+    def next_acting_player(self):
+
+        # search all player numbers from the current player up
+        for i in range(self.acting_player, self.num_players):
+            player = self.players[i]
+            if(player.number == self.acting_player):
+                pass
+            elif(player.folded == False):
+                return player.number
+
+        # loop around to player 0->current player if not already found
+        for i in range(0, self.acting_player):
+            player = self.players[i]
+            if(player.number == self.acting_player):
+                pass
+            elif(player.folded == False):
+                return player.number
+
+        print("Could not increment acting player, no unfolded player other than the current acting player found!")
+        exit(0)        
+        
+    # calculate valid bets.
+    # args: for_children: determines if this is being called to calculate the valid children of a node. If it is, it will ignore the cash stack of the player, and return all bets legal by the rules of limit poker
+    def calculate_valid_bets(self, for_children=False):
+        valid_bets = [FOLD]
+        current_player = self.players[self.acting_player]
+
+        # player has already matched current contribution, and can thus check
+        if(current_player.bet == self.contribution):
+            valid_bets.append(CHECK)
+
+        contribution_diff = self.contribution - current_player.bet
+            
+        # player can match current contribution
+        if( (for_children == True) or
+            ((contribution_diff > 0) and (current_player.cash > contribution_diff))):
+            valid_bets.append(contribution_diff)
+
+        # player raises
+        if(self.bet_counter < 4):
+            if( (for_children == True) or (current_player.cash > (contribution_diff + BIG_BLIND) ) ):
+                valid_bets.append(contribution_diff + BIG_BLIND)
+
+        return valid_bets
+            
     # bet size is -1 for fold, 0 for check, and either 2 or 4
     # first, calculate to total players contribution to the pot for the game.
     # then, see if this contribution is equal to the current contribution
     # if greater, see if the increase (raise amount) is valid (i.e. 1 big blind), and that no more than 4 bets have been made this round. If it is, increment the bet counter
     # 
-    def place_bet(self, player_num, bet_size):
-        self.players[player_num].bet += bet_size
-
+    def place_bet(self, bet_size):
+        current_player = self.players[self.acting_player]
+        
         # player folds
         if(bet_size == FOLD):
-            self.players[player_num].folded = True
+            current_player.folded = True
+            if(self.have_all_but_one_folded()):
+                self.game_complete = True
+                winning_player = self.next_acting_player()
+                self.players[winning_player].winner = True
+                return
+            
         #player checks
-        elif(bet_size = CHECK):
-            if(self.players[player_num].bet != self.contribution):
+        elif(bet_size == CHECK):
+            if(current_player.bet != self.contribution):
                 print("Player attempted to check when player has not met the current contribution")
                 exit(0)
-            self.players[player_num].checked = True
+            current_player.checked = True
+            
         # player matches bet
-        elif( (self.players[player_num].bet + bet_size) == self.contribution ):
-            self.players[player_num].checked = True            
+        elif((current_player.bet + bet_size) == self.contribution):
+            current_player.checked = True
+            current_player.cash -= bet_size
+            current_player.bet  += bet_size
+            self.pot            += bet_size
+            
         # player raises
-        elif( (self.players[player_num].bet + bet_size) > self.contribution ):
+        elif( (current_player.bet + bet_size) > self.contribution ):
             if(self.bet_counter > 4):
                 print("Attempted to bet when 4 bets have already been made")
                 exit(0)
                 
-            raise_amount = self.players[player_num].bet - self.contribution
+            raise_amount = (current_player.bet + bet_size) - self.contribution
             if(raise_amount != BIG_BLIND):
                 print("Bet attempt was too high, attempted to raise ", raise_amount)
                 exit(0)
 
-            self.players[player_num].bet += bet_size
-            self.contribution += raise_amount
-            self.bet_counter += 1
+            current_player.bet  += bet_size
+            current_player.cash -= bet_size
+            self.contribution   += raise_amount
+            self.pot            += bet_size
+            self.bet_counter    += 1
             self.uncheck_all()
-            self.players[player_num].checked = True
+            current_player.checked = True
             
         else:
             print("Bet attempted it was illegal, something went wrong")
-            print("player num: ", player_num)
+            print("player num: ", current_player)
             print("bet_size: ", bet_size)
             print("game phase: ", self.game_phase)
             exit(0)
 
-        if( (self.bet_counter == 4) and (self.all_have_checked() == True) ):
+        self.acting_player = self.next_acting_player()
+        
+        if( self.all_have_checked() == True ):
+            self.goto_next_game_phase()
+
+    def end_the_game(self):
+        self.game_complete = True
+        self.calculate_winner()
+        
+                
+    def goto_next_game_phase(self):
+        print("Betting for " + self.game_phase + " has ended. Moving to next round...")
+        
+        if(self.game_phase == 'river'):
+            self.end_the_game()
+        else:
             self.bet_counter = 0
             self.uncheck_all()
-            self.deal_community()
-
-
-
+            self.deal_community()       
+    
     # returns true if all remaining players have checked
     def all_have_checked(self):
         for player in self.players:

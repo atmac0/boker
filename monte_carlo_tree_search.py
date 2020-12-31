@@ -1,4 +1,13 @@
 from math import *
+import random
+import itertools
+from deck import *
+
+import pdb
+
+EXPLORATION_WEIGHT = sqrt(2)
+DEALER_PLAYER = -1
+
 
 class Node:
     # args: history            - array of all nodes to get to this node
@@ -6,84 +15,175 @@ class Node:
     #       players_in_game    - list of booleans marking all players left in the game. Each index corresponds to a player, each boolean marks if they are still in the game
     #       acting_player      - integer marking the current acting player, used to index players_in_game. If acting player is -1, then the player is the dealer
     #       betting_round      - boolean describing if it is a betting round or not (betting round player chooses, non betting round dealer deals)
-    def __init__(self, history, exploration_weight, players_in_game):
+    def __init__(self, history):
         self.history = history
-        self.exploration_weight = exploration_weight
-        self.players_in_game = players_in_game
-        self.acting_player = self.find_acting_player()
+        self.acting_player = None
         
         # positive CRF is a good decision. negative CFR is a bad decision
         self.avg_CFR = 0
         self.visits = 0
+        self.children = None
+
+    # TODO Make these functions make children using itertools. Somehow determine the cards remaining
+    
+    def make_children_betting(self, holdem):
+        #pdb.set_trace()
+        self.acting_player = holdem.acting_player
         self.children = dict()
-
-
-    def get_parent(self):
-        if(history is None):
-            return None
+        valid_bets = holdem.calculate_valid_bets(for_children=True)
         
-        return self.history[-1]
-
-    # find current acting player by counting up from the previous acting player until you hit the next player still in the game
-    def find_acting_player(self):
-        player_counter = self.get_parent().acting_player
-
-        num_total_players = len(self.players_in_game)
+        new_history = self.history.copy()
+        new_history.append(self)
         
-        while(player_counter < (num_total_players * 3)):
-            player_counter += 1
-            if(self.players_in_game[player_counter % num_total_players] == True):
-                return player_counter
+        for bet in valid_bets:
+            self.children[bet] = Node(new_history)
 
-        raise Exception("COULD NOT FIND ACTING PLAYER, SOMETHING WENT WRONG!")
+    def make_children_dealer_private(self, holdem):
+        print("DEBUG: Make children dealer private")
+        self.children = dict()
+        self.acting_player = DEALER_PLAYER
+        
+        new_history = self.history.copy()
+        new_history.append(self)
+
+        deck_remaining = Deck(shuffle=False).deck
+        
+        for pair in itertools.combinations(deck_remaining, 2):
+            pair_string = card_list_to_string(pair)
+            self.children[pair_string] = Node(new_history)
+        
+    def make_children_dealer_flop(self, holdem, player_num):
+        print("DEBUG: Make children dealer flop")
+        self.children = dict()
+        self.acting_player = DEALER_PLAYER
+        
+        new_history = self.history.copy()
+        new_history.append(self)
+
+        deck_remaining = Deck(shuffle=False).deck
+
+        player_hand = holdem.players[player_num].hand
+
+        # delete cards in hand of player from cards remaining
+        for deck_card in reversed(deck_remaining):
+            for player_card in player_hand:
+                if( same_card(deck_card, player_card) ):
+                    deck_remaining.remove(deck_card)
+                    
+        for trio in itertools.combinations(deck_remaining, 3):
+            trio_string = card_list_to_string(trio)
+            self.children[trio_string] = Node(new_history)
+    
+    def make_children_dealer_turn_river(self, holdem, player_num):
+        print("DEBUG: Make children dealer turn/river")
+        self.children = dict()
+        self.acting_player = DEALER_PLAYER
+        
+        new_history = self.history.copy()
+        new_history.append(self)
+
+        deck_remaining = Deck(shuffle=False).deck
+
+        player_cards = list(holdem.players[player_num].hand)
+        if(holdem.game_phase == 'river'):
+            player_cards.append(holdem.turn)
+
+        # delete cards in hand of player from cards remaining
+        for deck_card in deck_remaining.copy():
+            for player_card in player_cards:
+                if( same_card(deck_card, player_card) ):
+                    deck_remaining.remove(deck_card)
+
+        for card in deck_remaining:
+            card_string = card.to_string()
+            self.children[card_string] = Node(new_history)
+
+    
+def strategy_dealer(node, holdem, player_num):
+    print("traversing dealer nodes for player ", player_num)
+    if(node.children == None):
+        if(holdem.game_phase == 'preflop'):
+            print("dealing children preflop")
+            node.make_children_dealer_private(holdem)
+        if(holdem.game_phase == 'flop'):
+            print("dealing children flop")
+            node.make_children_dealer_flop(holdem, player_num)
+        if(holdem.game_phase == 'turn' or holdem.game_phase == 'river'):
+            print("dealing children turn or river")
+            node.make_children_dealer_turn_river(holdem, player_num)
+
+    print("DEBUG: HOLDEM GAME PHASE: ", holdem.game_phase)
+    print("DEBUG: CHILD TYPE: ", type(node.children))
+    print("DEBUG: CHILD SAMPLE KEY: ", list(node.children.keys())[0])
+
             
-    # calculate all valid bets based on the history
-    def calculate_valid_bets(self):
-        pass
+    if(holdem.game_phase == 'preflop'):
+        print("dealing preflop")
+        card_token = card_list_to_string(holdem.players[player_num].hand)
+    if(holdem.game_phase == 'flop'):
+        print("dealing flop")
+        card_token = card_list_to_string(holdem.flop)
+    if(holdem.game_phase == 'turn'):
+        print("dealing turn")
+        card_token = card_list_to_string([holdem.turn])
+    if(holdem.game_phase == 'river'):
+        print("dealing river")
+        card_token = card_list_to_string([holdem.river])
 
-    # calculate all cards that can be drawn based on the history
-    def calculate_valid_draws(self):
-        pass
-        
-    # args: valid_bets - a list of integers of all valid bets
-    def do_rollout(self):
-        self.visits += 1
-
-        if(self.betting_round):
-            choices = self.calculate_valid_bets()
+    print("DEBUG: CARD TOKEN: ", card_token)
+    if(holdem.game_phase == 'turn'):
+        print("DEBUG: TURN CHILDREN : ", node.children.keys())
+    chosen_node = node.children[card_token]
             
-        else: # dealer round
-            choices = self.calculate_valid_draws()
-        
-        
-        if(len(self.children) == 0):
+    return chosen_node
 
-            
-            
-            for bet in valid_bets:
-                pass
-                #self.children[str(bet)] = Node(self, self.exploration_weight, self.players_in_game, self.acting_player
-    # selects a child node for a drawing round based on the least number of visits
-    def select_child_draw(self):
-        choice = self.children[0]
 
-        for child in self.children:
-            if(choice.visits < child.visits):
-                choice = child
+# strategy where player chooses max allowed bet.
+def strategy_maximum_bet(player_nodes, holdem):
+    
+    valid_bets = holdem.calculate_valid_bets()
+    print("AI playing strategy maximum bet")
+    print("The valid bets are: ", valid_bets)   
+    
+    choice = max(valid_bets)
 
-        return choice
+    print("The AI has chosen: ", choice)       
+
+    init_children_betting(player_nodes, holdem)
+    update_player_nodes(player_nodes, choice)
+    holdem.place_bet(choice)
+
+# strategy where player chooses random move/bet. Cannot choose a bet that exceeds current cash in hand
+def strategy_random_bet(player_nodes, holdem):
+    
+    valid_bets = holdem.calculate_valid_bets()
+    print("AI playing strategy random")
+    print("The valid bets are: ", valid_bets)   
+    
+    choice = random.choice(valid_bets)
+
+    print("The AI has chosen: ", choice)       
+
+    init_children_betting(player_nodes, holdem)
+    update_player_nodes(player_nodes, choice)
+    holdem.place_bet(choice)
+    
                 
-    # selects a child node for a betting round based on the equation UCB1 = CFR/visits_of_child + exploration_weight*sqrt(ln(visits_of_parent)/visits_of_child)
-    def select_child_betting(self):
+# strategy where player chooses move that minimizes CFR
+def strategy_mcts(node, valid_bets):
+        print("Playing strategy MCTS when it hasn't been implemented!")
+        exit(0)
+
+    
         choice = None
         UCB1_of_choice = None
 
         # for all children, calculate the UCB1. Return the child with the largest UCB1
-        for child in self.children:
+        for child in node.children:
             if(child.visits == 0):
                 return child
             
-            UCB1 = child.avg_CFR/child.visits + self.exploration_weight * sqrt( log(self.visits) / child.visits)
+            UCB1 = child.avg_CFR/child.visits + EXPLORATION_WEIGHT * sqrt( log(node.visits) / child.visits)
 
             if(choice == None):
                 choice = child
@@ -91,45 +191,35 @@ class Node:
             elif(UCB1 > UCB1_of_choice):
                 choice = child
                 UCB1_of_choice = UCB1
-
-        return choice
-                                        
-
-class MCTS:
-
-    def __init__(self, exploration_weight, layer_type):
-        self.Q         = 0 # total reward of each node
-        self.N         = 0 # total visit count for each node
-        self.layer_type = layer_type # layer type, used for computing children
-        self.visits    = 0
-
-        self.game_state = {0:"betting1", 1:"preflop", 2:"betting2", 3:"turn", 4:"betting3", 5:"river", 6:"betting4"}
-
-        do_rollout()
-
-
-    def do_rollout(layer):
-        if(self.game_state["betting1"] == self.layer_type):
-            decisions = [1,10,100,1000] # placeholder bet amounts
-            regret = []
-        elif(self.game_state["preflop"] == self.layer_type):
-            pass
-        elif(self.game_state["betting2"] == self.layer_type):
-            pass
-        elif(self.game_state["turn"] == self.layer_type):
-            pass
-        elif(self.game_state["betting3"] == self.layer_type):
-            pass
-        elif(self.game_state["river"] == self.layer_type):
-            pass
-        elif(self.game_state["betting4"] == self.layer_type):
-            pass        
-
-
-# strategy where player chooses random move/bet
-def strategy_random(node, valid_bets):
-    pass
                 
-# strategy where player chooses move that minimizes CFR
-def strategy_mcts(node, valid_bets):
+        return choice    
+
+
+# get an input from the user for the next choice
+def strategy_user_input(player_nodes, holdem):
+    valid_bets = holdem.calculate_valid_bets()
+    cash_stack = holdem.players[holdem.acting_player].cash    
+        
+    print("User playing")
+    print("Please enter a valid bet. The bets available are: ", valid_bets)
+    print("You have a cash stack of ", cash_stack)
+    print("The current pot is ", holdem.pot)
     
+    user_input = int(input("Bet: "))
+
+    while(user_input not in valid_bets):
+        user_input = int(input("Invalid choice: "))
+
+    init_children_betting(player_nodes, holdem)
+    update_player_nodes(player_nodes, user_input)
+    holdem.place_bet(user_input)
+
+def update_player_nodes(player_nodes, key):
+    for i in range(0, len(player_nodes)):
+        player_nodes[i] = player_nodes[i].children[key]
+
+def init_children_betting(player_nodes, holdem):
+    for node in player_nodes:
+        node.acting_player = holdem.acting_player
+        if(node.children == None):
+            node.make_children_betting(holdem)

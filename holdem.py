@@ -1,5 +1,7 @@
 from deck import *
 
+NUM_CARDS_IN_FLOP
+
 class Player:
 
     def __init__(self):
@@ -28,7 +30,9 @@ class Holdem:
         self.raise_amount  = 0
 
         self.deck            = Deck()
-        self.community_cards = []        
+        self.flop            = None
+        self.turn            = None
+        self.river           = None      
 
     # deal the hands. Make players pay the blinds.
     def deal_hands(self):
@@ -47,25 +51,20 @@ class Holdem:
         
 
     def deal_community(self):
-        num_community = len(self.community_cards)
-
         # deal flop
-        if(num_community == 0):
-            self.community_cards.append(self.deck.draw())
-            self.community_cards.append(self.deck.draw())
-            self.community_cards.append(self.deck.draw())
+        if(self.flop == None):
+            self.flop = [self.deck.draw() for x in range(0,NUM_CARDS_IN_FLOP)]
         # deal turn or the river
-        elif(num_community > 0 and num_community < 5):
-            self.community_cards.append(self.deck.draw())
+        elif(self.turn == None):
+            self.turn = [self.deck.draw()]
+        elif(self.river == None):
+            self.river = [self.deck.draw()]
         else:
-            print('Error in dealing community: {0} cards in community pool'.format(num_community))
+            print('Error in dealing community: flop, turn, and river already dealt')
 
         # reset the players bet for this round
         for player in self.players:
             player.current_bet = 0
-
-    def view_community(self):
-        return self.community_cards
 
     def get_hand(self, player_num):
         return self.players[player_num].hand
@@ -86,7 +85,9 @@ class Holdem:
                 
     def reset_game(self):
         self.pot             = 0
-        self.community_cards = []
+        self.flop = None
+        self.turn = None
+        self.river = None
         self.deck.shuffle()
         self.assign_blinds()
         

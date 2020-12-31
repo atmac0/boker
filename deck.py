@@ -78,7 +78,9 @@ class Deck:
         else:
             print("Attempting to draw: no cards left in the deck")
             return None
-        
+
+    def remaining_cards(self):
+        return self.deck[self.deck_counter:]
     
 # args: card_list - unsorted array of cards
 # summary:
@@ -122,3 +124,17 @@ def print_card_list(card_list):
     print("PRINTING CARD LIST")
     for card in card_list:
         print("SUIT: " + str(card.suit) + " , RANK: " + str(card.rank))
+
+def card_list_to_string(card_list):
+    card_list_string = ''
+
+    for card in card_list:
+        card_list_string += card.to_string()
+
+    return card_list_string
+
+def same_card(card1, card2):
+    if(card1.rank == card2.rank):
+        if(card1.suit == card2.suit):
+            return True
+    return False

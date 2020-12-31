@@ -1,50 +1,69 @@
 from math import *
-from monte_carlo_tree_search_limit import *
+from monte_carlo_tree_search import *
 from deck import *
+from limit_holdem import *
 
-little_blind = 2
-big_blind = 4
-
-has_bet = False
-raise_count = 0
-
-
-
+import pdb
 
 def main():
+    # variables needed to initialize and keep track of game/MCST    
     player_count = 2
-    players_in_game = [True for i in range(0, player_count)]
-    
     exploration_weight = sqrt(2)
-    node_head = Node([], exploration_weight, players_in_game, None)
-
-    # list of tree positions for all players
+    node_head = Node([]) # head node players will reset to at end of game
+    
+    # list of current tree positions for all players
     player_nodes = [node_head for i in range(0, player_count)]
 
-    deck = Deck()
-
-    # loop forever
+    # Play limit texas holdem, loop forever
     while(True):
+        print("Welcome to Limit Texas holdem with {0} players!".format(player_count))
 
+        # start a new game
         holdem = Limit_Holdem(player_count)
+        game_phase = holdem.game_phase
+        
+        # deal the private information set for each player
+        for player_num in range(0, player_count):
+            player_nodes[player_num] = strategy_dealer(player_nodes[player_num], holdem, player_num)
         
         # loop while the game is still ongoing
         while(not holdem.game_complete):
-            if(current_node.acting_player == -1):
-                print("DEALER PLAYING")
-                card = deck.draw()
-                current_node = strategy_dealer(current_node, card)
+            
+            if(game_phase != holdem.game_phase):
+                game_phase = holdem.game_phase
+
+                if(game_phase == 'flop'):
+                    cards_drawn = holdem.flop
+                if(game_phase == 'turn'):
+                    cards_drawn = [holdem.turn]
+                if(game_phase == 'river'):
+                    cards_drawn = [holdem.river]
+
+                cards_drawn_token = card_list_to_string(cards_drawn)
+
+                for player_num in range(0, player_count):
+                    node_after_draw = strategy_dealer(player_nodes[player_num], holdem, player_num)
+                    player_nodes[player_num] = node_after_draw
+                    
+            
             # all other players will play with a random strategy for testing. This will eventually be changed to a MCTS
-            elif(current_node.acting_player != 0):
-                print("USER PLAYING")
-                current_node = strategy_random(current_node, cash_stacks)
+            elif(holdem.acting_player == 0):
+                strategy_user_input(player_nodes, holdem)
             else:
-                print("RANDOM PLAYING")
-                current_node = strategy_user_input(current_node, cash_stacks)
+                strategy_maximum_bet(player_nodes, holdem)
 
 
-        print("GAME ENDED, RESTARTING")
-        current_node = node_head
+
+        print("The game has ended.")
+        for player in holdem.players:
+            if(player.winner):
+                print("Player {0} won".format(player.number))
+            else:
+                print("Player {0} lost".format(player.number))
+        print(" ")
+        print("Restarting...")
+        
+        player_nodes = [node_head for i in range(0, player_count)]        
 
 if(__name__ == "__main__"):
     main()

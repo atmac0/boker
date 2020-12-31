@@ -435,8 +435,6 @@ class Node:
 # strategy where player chooses random move/bet
 def strategy_random(node, cash_stacks):
     valid_bets = node.get_valid_bets()
-    print(valid_bets)
-    exit(0)
     
     next_node = node.get_random_child_node()
     
