@@ -3,6 +3,11 @@ import random
 NUM_SUITS = 4
 NUM_RANKS = 14
 
+SPADE    = 0
+CLUB     = 1
+DIAMONDS = 2
+HEARTS   = 3
+
 ACE_LOW  = 0
 ONE      = 1
 TWO      = 2
@@ -30,9 +35,22 @@ class Card:
     # string will be a unique value formatted as four numbers, representing suit/rank. For example, a jack (10) of hearts (3) will be represented as 1003
     def to_string(self):
 
-        card_string = str(self.suit).zfill(2) + str(self.rank).zfill(2)
+        suit_char = self.suit_num_to_char(self.suit)
+        
+        card_string = str(suit_char) + str(self.rank).zfill(2)
 
         return card_string
+
+
+    def suit_num_to_char(self, suit_num):
+        if(suit_num == SPADE):
+            return 'S'
+        if(suit_num == CLUB):
+            return 'C'
+        if(suit_num == DIAMONDS):
+            return 'D'
+        if(suit_num == HEARTS):
+            return 'H'
         
 class Deck:
 
@@ -127,7 +145,6 @@ def print_card_list(card_list):
 
 def card_list_to_string(card_list):
     card_list_string = ''
-
     for card in card_list:
         card_list_string += card.to_string()
 

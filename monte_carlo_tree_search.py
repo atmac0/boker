@@ -27,7 +27,6 @@ class Node:
     # TODO Make these functions make children using itertools. Somehow determine the cards remaining
     
     def make_children_betting(self, holdem):
-        #pdb.set_trace()
         self.acting_player = holdem.acting_player
         self.children = dict()
         valid_bets = holdem.calculate_valid_bets(for_children=True)
@@ -39,7 +38,6 @@ class Node:
             self.children[bet] = Node(new_history)
 
     def make_children_dealer_private(self, holdem):
-        print("DEBUG: Make children dealer private")
         self.children = dict()
         self.acting_player = DEALER_PLAYER
         
@@ -53,7 +51,6 @@ class Node:
             self.children[pair_string] = Node(new_history)
         
     def make_children_dealer_flop(self, holdem, player_num):
-        print("DEBUG: Make children dealer flop")
         self.children = dict()
         self.acting_player = DEALER_PLAYER
         
@@ -75,7 +72,6 @@ class Node:
             self.children[trio_string] = Node(new_history)
     
     def make_children_dealer_turn_river(self, holdem, player_num):
-        print("DEBUG: Make children dealer turn/river")
         self.children = dict()
         self.acting_player = DEALER_PLAYER
         
@@ -111,11 +107,6 @@ def strategy_dealer(node, holdem, player_num):
         if(holdem.game_phase == 'turn' or holdem.game_phase == 'river'):
             print("dealing children turn or river")
             node.make_children_dealer_turn_river(holdem, player_num)
-
-    print("DEBUG: HOLDEM GAME PHASE: ", holdem.game_phase)
-    print("DEBUG: CHILD TYPE: ", type(node.children))
-    print("DEBUG: CHILD SAMPLE KEY: ", list(node.children.keys())[0])
-
             
     if(holdem.game_phase == 'preflop'):
         print("dealing preflop")
@@ -130,9 +121,6 @@ def strategy_dealer(node, holdem, player_num):
         print("dealing river")
         card_token = card_list_to_string([holdem.river])
 
-    print("DEBUG: CARD TOKEN: ", card_token)
-    if(holdem.game_phase == 'turn'):
-        print("DEBUG: TURN CHILDREN : ", node.children.keys())
     chosen_node = node.children[card_token]
             
     return chosen_node
@@ -142,8 +130,13 @@ def strategy_dealer(node, holdem, player_num):
 def strategy_maximum_bet(player_nodes, holdem):
     
     valid_bets = holdem.calculate_valid_bets()
+    player_hand_string = card_list_to_string(list(holdem.players[holdem.acting_player].hand))
+    public_cards_string = card_list_to_string(holdem.get_public_card_list())
+    
     print("AI playing strategy maximum bet")
     print("The valid bets are: ", valid_bets)   
+    print("The AI's hand is: ", player_hand_string)
+    print("The public cards are: ", public_cards_string)
     
     choice = max(valid_bets)
 
@@ -157,8 +150,13 @@ def strategy_maximum_bet(player_nodes, holdem):
 def strategy_random_bet(player_nodes, holdem):
     
     valid_bets = holdem.calculate_valid_bets()
+    player_hand_string = card_list_to_string(list(holdem.players[holdem.acting_player].hand))
+    public_cards_string = card_list_to_string(holdem.get_public_card_list())
+    
     print("AI playing strategy random")
     print("The valid bets are: ", valid_bets)   
+    print("The AI's hand is: ", player_hand_string)
+    print("The public cards are: ", public_cards_string)
     
     choice = random.choice(valid_bets)
 
@@ -199,11 +197,16 @@ def strategy_mcts(node, valid_bets):
 def strategy_user_input(player_nodes, holdem):
     valid_bets = holdem.calculate_valid_bets()
     cash_stack = holdem.players[holdem.acting_player].cash    
-        
+
+    player_hand_string = card_list_to_string(list(holdem.players[holdem.acting_player].hand))
+    public_cards_string = card_list_to_string(holdem.get_public_card_list())
+    
     print("User playing")
     print("Please enter a valid bet. The bets available are: ", valid_bets)
     print("You have a cash stack of ", cash_stack)
     print("The current pot is ", holdem.pot)
+    print("Your hand is: ", player_hand_string)
+    print("The public cards are: ", public_cards_string)
     
     user_input = int(input("Bet: "))
 

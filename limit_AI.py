@@ -14,6 +14,9 @@ def main():
     # list of current tree positions for all players
     player_nodes = [node_head for i in range(0, player_count)]
 
+    num_games_played = 0
+    num_games_won    = 0
+    
     # Play limit texas holdem, loop forever
     while(True):
         print("Welcome to Limit Texas holdem with {0} players!".format(player_count))
@@ -48,7 +51,8 @@ def main():
             
             # all other players will play with a random strategy for testing. This will eventually be changed to a MCTS
             elif(holdem.acting_player == 0):
-                strategy_user_input(player_nodes, holdem)
+                #strategy_user_input(player_nodes, holdem)
+                strategy_maximum_bet(player_nodes, holdem)
             else:
                 strategy_maximum_bet(player_nodes, holdem)
 
@@ -56,10 +60,17 @@ def main():
 
         print("The game has ended.")
         for player in holdem.players:
+            if((player.number == 0) and (player.winner == True)):
+                num_games_won += 1
+            
             if(player.winner):
                 print("Player {0} won".format(player.number))
             else:
                 print("Player {0} lost".format(player.number))
+
+        num_games_played += 1
+        print("GAMES PLAYED: ", num_games_played)
+        print("WIN RATIO: ", num_games_won/num_games_played)
         print(" ")
         print("Restarting...")
         

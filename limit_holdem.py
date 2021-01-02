@@ -1,10 +1,21 @@
 from deck import *
+import pdb
 
-# all values 
 BIG_BLIND    = 2
 LITTLE_BLIND = 1
 CHECK        = 0
 FOLD         = -1
+
+# hand rank values
+RANK_STRAIGHT_FLUSH  = 8
+RANK_FOUR_OF_A_KIND  = 7
+RANK_FULL_HOUSE      = 6
+RANK_FLUSH           = 5
+RANK_STRAIGHT        = 4
+RANK_THREE_OF_A_KIND = 3
+RANK_TWO_PAIR        = 2
+RANK_PAIR            = 1
+RANK_HIGH_CARD       = 0
 
 class Player:
 
@@ -90,7 +101,17 @@ class Limit_Holdem:
 
         deck = Deck(shuffle=False).deck
 
+    def get_public_card_list(self):
+        public_card_list = []
         
+        if(self.flop != []):
+            public_card_list += self.flop
+        if(self.turn != None):
+            public_card_list.append(self.turn)
+        if(self.river != None):
+            public_card_list.append(self.river)
+
+        return public_card_list
             
     # check if all but 1 players have folded
     def have_all_but_one_folded(self):
@@ -128,17 +149,27 @@ class Limit_Holdem:
                 winning_player_rank      = rank
                 winning_player_high_card = highcard
                 winning_players          = [player_num]
-
             # current player has a better rank than the previous highest
             elif(rank > winning_player_rank):
                 winning_player_rank      = rank
                 winning_player_high_card = highcard
                 winning_players          = [player_num]
-
             # current player has the same rank as the previous highest
             elif(rank == winning_player_rank):
-                # if the player has the high card, they win over the other player
-                if(highcard > winning_player_high_card):
+                # a flush can possibly have no high card (flush is entirely made up from public cards). These conditions account for it
+                # current winner and current player has flush but no high card
+                if( (rank == RANK_FLUSH) and (highcard == None) and (winning_player_high_card == None) ):
+                    winning_players.append(player_num)
+                # current player has a high card and current winner does not
+                elif( (rank == RANK_FLUSH) and (highcard != None) and (winning_player_high_card == None) ):
+                    winning_player_rank      = rank
+                    winning_player_high_card = highcard
+                    winning_players          = [player_num]
+                # current winner has high card and current player does not
+                elif( (rank == RANK_FLUSH) and (highcard == None) and (winning_player_high_card != None) ):
+                    pass
+                # end of flush conditions
+                elif(highcard > winning_player_high_card):
                     winning_player_rank      = rank
                     winning_player_high_card = highcard
                     winning_players          = [player_num]
@@ -152,6 +183,8 @@ class Limit_Holdem:
         if(len(winning_players) > 1):
             self.ended_in_tie = True
 
+    
+            
     def set_winner(self, winning_players):
         for player_num in range(0, len(self.players)):
             if(player_num in winning_players):
@@ -323,37 +356,37 @@ class Limit_Holdem:
 
         straight_flush, high_card_rank = self.is_straight_flush(hand[:], public_cards[:])
         if(straight_flush):
-            return 8, high_card_rank
+            return RANK_STRAIGHT_FLUSH, high_card_rank
 
         four_of_a_kind, high_card_rank = self.is_four_of_a_kind(sorted_cards[:])
         if(four_of_a_kind):
-            return 7, high_card_rank
+            return RANK_FOUR_OF_A_KIND, high_card_rank
 
         full_house, high_card_rank = self.is_full_house(sorted_cards[:])
         if(full_house):
-            return 6, high_card_rank
+            return RANK_FULL_HOUSE, high_card_rank
 
         flush, high_card_rank = self.is_flush(hand[:], public_cards[:])
         if(flush):
-            return 5, high_card_rank
+            return RANK_FLUSH, high_card_rank
 
         straight, high_card_rank = self.is_straight(sorted_cards[:])
         if(straight):
-            return 4, high_card_rank
+            return RANK_STRAIGHT, high_card_rank
 
         three_of_a_kind, high_card_rank = self.is_three_of_a_kind(sorted_cards[:])
         if(three_of_a_kind):
-            return 3, high_card_rank
+            return RANK_THREE_OF_A_KIND, high_card_rank
 
         two_pair, high_card_rank = self.is_two_pair(sorted_cards[:])
         if(two_pair):
-            return 2, high_card_rank
+            return RANK_TWO_PAIR, high_card_rank
 
         pair, high_card_rank = self.is_pair(sorted_cards[:])
         if(pair):
-            return 1, high_card_rank
+            return RANK_PAIR, high_card_rank
 
-        return 0, self.get_high_card(hand[:])
+        return RANK_HIGH_CARD, self.get_high_card(hand[:])
 
 
     def get_high_card(self, cards):
@@ -531,7 +564,7 @@ class Limit_Holdem:
     # returns: None if no flush is present.
     #          An integer corresponding to the suit of the flush if there is a flush
     def is_flush(self, hand, public_cards):
-
+        
         all_cards = hand + public_cards
 
         if(len(all_cards) < 5):
