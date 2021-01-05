@@ -322,7 +322,7 @@ class Limit_Holdem:
         
                 
     def goto_next_game_phase(self):
-        print("Betting for " + self.game_phase + " has ended. Moving to next round...")
+        #print("Betting for " + self.game_phase + " has ended. Moving to next round...")
         
         if(self.game_phase == 'river'):
             self.end_the_game()
