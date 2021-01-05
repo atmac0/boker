@@ -4,6 +4,7 @@ from deck import *
 from limit_holdem import *
 
 import pdb
+import resource
 
 def main():
     # variables needed to initialize and keep track of game/MCST    
@@ -18,7 +19,7 @@ def main():
     num_games_won    = 0
     
     # Play limit texas holdem, loop forever
-    while(True):
+    while(True):        
         print("Welcome to Limit Texas holdem with {0} players!".format(player_count))
 
         # start a new game
@@ -71,6 +72,11 @@ def main():
         num_games_played += 1
         print("GAMES PLAYED: ", num_games_played)
         print("WIN RATIO: ", num_games_won/num_games_played)
+        print("MAX MEMORY USED BY PROGRAM: ", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # if memory usage exceeds 500gb
+        if(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss > 500000000):
+            print("OVER 500gb RAM USED. EXITING...")
+            exit(0)
         print(" ")
         print("Restarting...")
         
