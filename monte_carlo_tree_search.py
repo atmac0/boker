@@ -96,29 +96,29 @@ class Node:
 
     
 def strategy_dealer(node, holdem, player_num):
-    print("traversing dealer nodes for player ", player_num)
+    #print("traversing dealer nodes for player ", player_num)
     if(node.children == None):
         if(holdem.game_phase == 'preflop'):
-            print("dealing children preflop")
+            #print("dealing children preflop")
             node.make_children_dealer_private(holdem)
         if(holdem.game_phase == 'flop'):
-            print("dealing children flop")
+            #print("dealing children flop")
             node.make_children_dealer_flop(holdem, player_num)
         if(holdem.game_phase == 'turn' or holdem.game_phase == 'river'):
-            print("dealing children turn or river")
+            #print("dealing children turn or river")
             node.make_children_dealer_turn_river(holdem, player_num)
             
     if(holdem.game_phase == 'preflop'):
-        print("dealing preflop")
+        #print("dealing preflop")
         card_token = card_list_to_string(holdem.players[player_num].hand)
     if(holdem.game_phase == 'flop'):
-        print("dealing flop")
+        #print("dealing flop")
         card_token = card_list_to_string(holdem.flop)
     if(holdem.game_phase == 'turn'):
-        print("dealing turn")
+        #print("dealing turn")
         card_token = card_list_to_string([holdem.turn])
     if(holdem.game_phase == 'river'):
-        print("dealing river")
+        #print("dealing river")
         card_token = card_list_to_string([holdem.river])
 
     chosen_node = node.children[card_token]
