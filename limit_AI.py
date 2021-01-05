@@ -73,7 +73,7 @@ def main():
         num_games_played += 1
         print("GAMES PLAYED: ", num_games_played)
         print("WIN RATIO: ", num_games_won/num_games_played)
-        print("MAX MEMORY USED BY PROGRAM: ", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        print("GigaBytes MEMORY USED BY PROGRAM: ", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1000000)
         # if memory usage exceeds 500gb
         if(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss > 500000000):
             print("OVER 500gb RAM USED. EXITING...")
