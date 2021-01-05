@@ -146,6 +146,29 @@ def strategy_maximum_bet(player_nodes, holdem):
     update_player_nodes(player_nodes, choice)
     holdem.place_bet(choice)
 
+
+# strategy where player chooses random move/bet. Cannot choose a bet that exceeds current cash in hand
+def strategy_random_bet_no_fold(player_nodes, holdem):
+    
+    valid_bets = holdem.calculate_valid_bets()
+    player_hand_string = card_list_to_string(list(holdem.players[holdem.acting_player].hand))
+    public_cards_string = card_list_to_string(holdem.get_public_card_list())
+    
+    #print("AI playing strategy random")
+    #print("The valid bets are: ", valid_bets)   
+    #print("The AI's hand is: ", player_hand_string)
+    #print("The public cards are: ", public_cards_string)
+
+    valid_bets.remove(-1) # remove fold
+    
+    choice = random.choice(valid_bets)
+
+    #print("The AI has chosen: ", choice)       
+
+    init_children_betting(player_nodes, holdem)
+    update_player_nodes(player_nodes, choice)
+    holdem.place_bet(choice)
+    
 # strategy where player chooses random move/bet. Cannot choose a bet that exceeds current cash in hand
 def strategy_random_bet(player_nodes, holdem):
     

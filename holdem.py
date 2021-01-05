@@ -1,7 +1,5 @@
 from deck import *
 
-NUM_CARDS_IN_FLOP
-
 class Player:
 
     def __init__(self):
