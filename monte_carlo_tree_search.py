@@ -7,7 +7,7 @@ import pdb
 
 EXPLORATION_WEIGHT = sqrt(2)
 DEALER_PLAYER = -1
-
+FOLD = -1
 
 class Node:
     # args: history            - array of all nodes to get to this node
@@ -17,8 +17,7 @@ class Node:
     #       betting_round      - boolean describing if it is a betting round or not (betting round player chooses, non betting round dealer deals)
     def __init__(self, history):
         self.history = history
-        self.acting_player = None
-        
+        self.acting_player = None        
         # positive CRF is a good decision. negative CFR is a bad decision
         self.avg_CFR = 0
         self.visits = 0
@@ -29,6 +28,7 @@ class Node:
     def make_children_betting(self, holdem):
         self.acting_player = holdem.acting_player
         self.children = dict()
+        
         valid_bets = holdem.calculate_valid_bets(for_children=True)
         
         new_history = self.history.copy()
@@ -147,7 +147,7 @@ def strategy_maximum_bet(player_nodes, holdem):
     holdem.place_bet(choice)
 
 
-# strategy where player chooses random move/bet. Cannot choose a bet that exceeds current cash in hand
+# strategy where player chooses random move/bet except for folding, unless the hand is crappy. Cannot choose a bet that exceeds current cash in hand
 def strategy_random_bet_no_fold(player_nodes, holdem):
     
     valid_bets = holdem.calculate_valid_bets()
@@ -160,8 +160,11 @@ def strategy_random_bet_no_fold(player_nodes, holdem):
     #print("The public cards are: ", public_cards_string)
 
     valid_bets.remove(-1) # remove fold
-    
-    choice = random.choice(valid_bets)
+
+    if(holdem.player_has_crappy_hand(holdem.acting_player)):
+        choice = FOLD
+    else:
+        choice = random.choice(valid_bets)
 
     #print("The AI has chosen: ", choice)       
 

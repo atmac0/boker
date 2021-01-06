@@ -338,7 +338,24 @@ class Limit_Holdem:
                 return False
         return True
 
+    # this is a hack to keep memory usage under 500gb, so the AI will fold on crappy hands instead of making useless nodes that would be folded on anyways (e.g. low rank, no pair)
+    def player_has_crappy_hand(self, player_num):
+        hand = self.players[player_num].hand
 
+        # flush potential isn't crappy
+        if(hand[0].suit == hand[1].suit):
+            return False
+        # pocket pair isn't crappy
+        if(hand[0].rank == hand[1].rank):
+            return False
+
+        # low no pair/flush is crappy
+        if(hand[0].rank < 9 and hand[1].rank < 9):
+            return True
+
+        # everything else isn't crappy
+        return False
+    
     # hand ranks listed 0-8:
     # 0: high card
     # 1: one pair
