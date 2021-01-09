@@ -15,14 +15,15 @@ class Node:
     #       players_in_game    - list of booleans marking all players left in the game. Each index corresponds to a player, each boolean marks if they are still in the game
     #       acting_player      - integer marking the current acting player, used to index players_in_game. If acting player is -1, then the player is the dealer
     #       betting_round      - boolean describing if it is a betting round or not (betting round player chooses, non betting round dealer deals)
-    def __init__(self, history):
-        self.history = history
+    def __init__(self, parent):
+        self.parent = parent
+        self.key = None
         self.acting_player = None        
         # positive CRF is a good decision. negative CFR is a bad decision
         self.avg_CFR = 0
         self.visits = 0
         self.children = None
-
+ 
     # TODO Make these functions make children using itertools. Somehow determine the cards remaining
     
     def make_children_betting(self, holdem):
@@ -31,31 +32,22 @@ class Node:
         
         valid_bets = holdem.calculate_valid_bets(for_children=True)
         
-        new_history = self.history.copy()
-        new_history.append(self)
-        
         for bet in valid_bets:
-            self.children[bet] = Node(new_history)
+            self.children[bet] = Node(self)
 
     def make_children_dealer_private(self, holdem):
         self.children = dict()
         self.acting_player = DEALER_PLAYER
-        
-        new_history = self.history.copy()
-        new_history.append(self)
 
         deck_remaining = Deck(shuffle=False).deck
         
         for pair in itertools.combinations(deck_remaining, 2):
             pair_string = card_list_to_string(pair)
-            self.children[pair_string] = Node(new_history)
+            self.children[pair_string] = Node(self)
         
     def make_children_dealer_flop(self, holdem, player_num):
         self.children = dict()
         self.acting_player = DEALER_PLAYER
-        
-        new_history = self.history.copy()
-        new_history.append(self)
 
         deck_remaining = Deck(shuffle=False).deck
 
@@ -69,14 +61,11 @@ class Node:
                     
         for trio in itertools.combinations(deck_remaining, 3):
             trio_string = card_list_to_string(trio)
-            self.children[trio_string] = Node(new_history)
+            self.children[trio_string] = Node(self)
     
     def make_children_dealer_turn_river(self, holdem, player_num):
         self.children = dict()
         self.acting_player = DEALER_PLAYER
-        
-        new_history = self.history.copy()
-        new_history.append(self)
 
         deck_remaining = Deck(shuffle=False).deck
 
@@ -92,7 +81,7 @@ class Node:
 
         for card in deck_remaining:
             card_string = card.to_string()
-            self.children[card_string] = Node(new_history)
+            self.children[card_string] = Node(self)
 
     
 def strategy_dealer(node, holdem, player_num):
