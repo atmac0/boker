@@ -43,8 +43,7 @@ class Limit_Holdem:
         self.players_remaining = num_players
         
         self.pot           = 0
-        self.contribution  = 0 # current value all players need to contribute/have contibuted
-        self.num_bets      = 0
+        self.contribution  = 0 # current value all players need to contribute/have contibutedo
         
         self.deck          = Deck()
         
@@ -86,32 +85,6 @@ class Limit_Holdem:
             self.game_phase = 'river'
         else:
             print('Error dealing cards, unexpected game phase of: ' + self.game_phase)
-
-    # get all the cards a certain player has not seen
-    def get_undrawn_cards(self, player_num):
-        hand = self.players[player_num].hand
-        public = self.flop.copy()
-
-        if(self.turn != None):
-            public.append(self.turn)
-        if(self.river != None):
-            public.append(self.river)
-
-        total_seen = hand + public
-
-        deck = Deck(shuffle=False).deck
-
-    def get_public_card_list(self):
-        public_card_list = []
-        
-        if(self.flop != []):
-            public_card_list += self.flop
-        if(self.turn != None):
-            public_card_list.append(self.turn)
-        if(self.river != None):
-            public_card_list.append(self.river)
-
-        return public_card_list
             
     # check if all but 1 players have folded
     def have_all_but_one_folded(self):
@@ -198,15 +171,6 @@ class Limit_Holdem:
     def uncheck_all(self):
         for player in self.players:
             player.checked = False
-
-    def set_players_remaining(self):
-        player_counter = 0
-
-        for player in self.players:
-            if(player.folded == False):
-                player_counter += 1
-
-        self.players_remaining = player_counter
 
     # finds the next non-folded player, sets the acting player to that player
     def next_acting_player(self):

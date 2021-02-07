@@ -1,0 +1,26 @@
+// bet values
+#define BIG_BLIND     2
+#define LITTLE_BLIND  1
+#define CHECK         0
+#define FOLD         -1
+
+// hand rank values
+#define RANK_STRAIGHT_FLUSH   8
+#define RANK_FOUR_OF_A_KIND   7
+#define RANK_FULL_HOUSE       6
+#define RANK_FLUSH            5
+#define RANK_STRAIGHT         4
+#define RANK_THREE_OF_A_KIND  3
+#define RANK_TWO_PAIR         2
+#define RANK_PAIR             1
+#define RANK_HIGH_CARD        0
+
+class Player
+{
+public:
+
+  Player(uint32_t player_num)
+  {
+    
+      
+}

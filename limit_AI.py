@@ -52,8 +52,8 @@ def main():
             
             # all other players will play with a random strategy for testing. This will eventually be changed to a MCTS
             elif(holdem.acting_player == 0):
-                #strategy_user_input(player_nodes, holdem)
-                strategy_random_bet_no_fold(player_nodes, holdem)
+                strategy_user_input(player_nodes, holdem)
+                #strategy_random_bet_no_fold(player_nodes, holdem)
             else:
                 strategy_random_bet_no_fold(player_nodes, holdem)
 
@@ -63,12 +63,10 @@ def main():
         for player in holdem.players:
             if((player.number == 0) and (player.winner == True)):
                 num_games_won += 1
-            '''
             if(player.winner):
                 print("Player {0} won".format(player.number))
             else:
                 print("Player {0} lost".format(player.number))
-            '''
 
         num_games_played += 1
         print("GAMES PLAYED: ", num_games_played)

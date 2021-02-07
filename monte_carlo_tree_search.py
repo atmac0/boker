@@ -50,18 +50,10 @@ class Node:
         self.acting_player = DEALER_PLAYER
 
         deck_remaining = Deck(shuffle=False).deck
-
-        player_hand = holdem.players[player_num].hand
-
-        # delete cards in hand of player from cards remaining
-        for deck_card in reversed(deck_remaining):
-            for player_card in player_hand:
-                if( same_card(deck_card, player_card) ):
-                    deck_remaining.remove(deck_card)
                     
-        for trio in itertools.combinations(deck_remaining, 3):
-            trio_string = card_list_to_string(trio)
-            self.children[trio_string] = Node(self)
+        for five_cards in itertools.combinations(deck_remaining, 5):
+            five_card_string = card_list_to_string(five_cards)
+            self.children[five_card_string] = Node(self)
     
     def make_children_dealer_turn_river(self, holdem, player_num):
         self.children = dict()
@@ -69,20 +61,17 @@ class Node:
 
         deck_remaining = Deck(shuffle=False).deck
 
-        player_cards = list(holdem.players[player_num].hand)
-        if(holdem.game_phase == 'river'):
-            player_cards.append(holdem.turn)
-
-        # delete cards in hand of player from cards remaining
-        for deck_card in deck_remaining.copy():
-            for player_card in player_cards:
-                if( same_card(deck_card, player_card) ):
-                    deck_remaining.remove(deck_card)
-
-        for card in deck_remaining:
-            card_string = card.to_string()
-            self.children[card_string] = Node(self)
-
+        if(holdem.game_phase == 'turn'):
+            for six_cards in itertools.combinations(deck_remaining, 6):
+                six_card_string = card_list_to_string(six_cards)
+                self.children[six_card_string] = Node(self)
+        elif(holdem.game_phase == 'river'):
+            for seven_cards in itertools.combinations(deck_remaining, 7):
+                seven_card_string = card_list_to_string(five_cards)
+                self.children[seven_card_string] = Node(self)
+        else:
+            print("Dealing turn or river when game phase is " + holdem.game_phase)
+            exit(0)
     
 def strategy_dealer(node, holdem, player_num):
     #print("traversing dealer nodes for player ", player_num)

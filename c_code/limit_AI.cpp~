@@ -1,0 +1,35 @@
+#include <iostream>
+#include <algorithm>    // std::random_shuffle
+#include <vector>       // std::vector
+#include <ctime>        // std::time
+#include <cstdlib>      // std::rand, std::srand
+
+#include "deck.h"
+
+void test_deck_stuff();
+
+int main()
+{
+  std::cout << "Starting program...\n";  
+  test_deck_stuff();
+  return 0;
+}
+
+void test_deck_stuff()
+{
+  std::cout << "Testing deck...\n";
+  Card card(SPADE, FIVE);
+  std::cout << "Card suit: " << card.suit << "\n";
+  std::cout << "Card rank: " << card.rank << "\n";
+
+  bool b_shuffle = false;
+  Deck deck1(b_shuffle);
+  std::cout << "Deck first suit: " << deck1.deck.front().suit << "\n";
+  std::cout << "Deck first rank: " << deck1.deck.front().suit << "\n";
+
+  b_shuffle = true;
+  Deck deck2(b_shuffle);
+  std::cout << "Deck first suit: " << deck2.deck.front().suit << "\n";
+  std::cout << "Deck first rank: " << deck2.deck.front().suit << "\n";  
+  
+}
