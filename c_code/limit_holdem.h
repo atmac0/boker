@@ -6,6 +6,7 @@
 #include <vector>       // std::vector
 #include <ctime>        // std::time
 #include <cstdlib>      // std::rand, std::srand
+#include <string>
 
 #include "deck.h"
 
@@ -25,6 +26,7 @@
 #define RANK_TWO_PAIR         2
 #define RANK_PAIR             1
 #define RANK_HIGH_CARD        0
+#define RANK_NONE            -1
 
 #define PREFLOP 0
 #define FLOP    1
@@ -32,6 +34,8 @@
 #define RIVER   3
 
 #define NUM_PLAYERS 2
+
+#define NUM_SUITS 4
 
 #define HAND_SIZE 2
 #define FLOP_SIZE 3
@@ -53,7 +57,7 @@ public:
   bool checked;
   uint32_t bet;
   uint32_t cash;
-  int32_t player_num;
+  int32_t number;
 
   Player()
   { 
@@ -121,27 +125,29 @@ public:
   void deal_hands();
   void deal_community();
   void calculate_winner();
-  void set_winner(uint32_t * winning_players, uint32_t num_winners);
+  void set_winner(std::vector<uint32_t> winning_players);
   void check(uint32_t player_num);
   void uncheck_all();
-  uint32_t get_next_acting_player();
-  std::vector<uint32_t> get_valid_bets();
+  uint32_t next_acting_player();
+  std::vector<int32_t> calculate_valid_bets(bool for_children);
   void place_bet(uint32_t bet);
   void end_the_game();
   void goto_next_game_phase();
   bool all_have_checked();
 
-  uint32_t get_hand_rank(Card * private_cards, Card * public_cards);
+  Card * get_all_cards_sorted(Card * private_cards, Card * public_cards);
+  
+  uint32_t get_hand_rank(Card * private_cards, Card * public_cards, uint32_t * high_card);
 
-  bool is_straight_flush(Card * private_cards, Card * public_cards, uint32_t * high_card);
-  bool is_four_of_a_kind(Card * sorted_cards, uint32_t * high_card);
-  bool is_full_house(Card * sorted_cards, uint32_t * high_card);
-  bool is_flush(Card * private_cards, Card * public_cards, uint32_t * high_card);
-  bool is_straight(Card * sorted_cards, uint32_t * high_card);
-  bool is_three_of_a_kind(Card * sorted_cards, uint32_t * high_card);
-  bool is_two_pair(Card * sorted_cards, uint32_t * high_card);
-  bool is_pair(Card * sorted_cards, uint32_t * high_card);
-  uint32_t get_high_card_rank(Card * card_list, uint32_t list_size);  
+  bool is_straight_flush(Card * private_cards, Card * public_cards, int32_t * high_card);
+  bool is_four_of_a_kind(Card * sorted_cards, int32_t * high_card);
+  bool is_full_house(Card * sorted_cards, int32_t * high_card);
+  bool is_flush(Card * private_cards, Card * public_cards, int32_t * high_card);
+  bool is_straight(Card * sorted_cards, int32_t * high_card);
+  bool is_three_of_a_kind(Card * sorted_cards, int32_t * high_card);
+  bool is_two_pair(Card * sorted_cards, int32_t * high_card);
+  bool is_pair(Card * sorted_cards, int32_t * high_card);
+  uint32_t get_high_card(Card * card_list, uint32_t list_size);  
   
 };
 
