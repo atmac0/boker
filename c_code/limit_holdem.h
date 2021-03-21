@@ -137,7 +137,7 @@ public:
 
   Card * get_all_cards_sorted(Card * private_cards, Card * public_cards);
   
-  uint32_t get_hand_rank(Card * private_cards, Card * public_cards, uint32_t * high_card);
+  uint32_t get_hand_rank(Card * private_cards, Card * public_cards, int32_t * high_card);
 
   bool is_straight_flush(Card * private_cards, Card * public_cards, int32_t * high_card);
   bool is_four_of_a_kind(Card * sorted_cards, int32_t * high_card);

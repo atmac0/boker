@@ -45,9 +45,9 @@ void Limit_Holdem::deal_community()
 void Limit_Holdem::calculate_winner()
 {
   int32_t winning_player_rank = RANK_NONE;
-  int32_t winning_player_high_card;
+  int32_t winning_player_high_card, high_card;
   std::vector<uint32_t> winning_players;
-  uint32_t rank, high_card;
+  uint32_t rank;
 
   for(uint32_t player_num = 0; player_num < NUM_PLAYERS; player_num++)
   {
@@ -354,66 +354,65 @@ Card * Limit_Holdem::get_all_cards_sorted(Card * private_cards, Card * public_ca
    6: full house
    7: four of a kind
    8: straight flush */
-uint32_t Limit_Holdem::get_hand_rank(Card * private_cards, Card * public_cards, uint32_t * high_card)
+uint32_t Limit_Holdem::get_hand_rank(Card * private_cards, Card * public_cards, int32_t * high_card)
 {
   Card * sorted_cards = get_all_cards_sorted(private_cards, public_cards);
   
   bool is_hand;
-  int32_t high_card_temp;
 
-  is_hand = is_straight_flush(private_cards, public_cards, &high_card_temp);
+  *high_card = RANK_NONE;
+  is_hand = is_straight_flush(private_cards, public_cards, high_card);
   if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_STRAIGHT_FLUSH;
   }
 
-  is_hand = is_four_of_a_kind(sorted_cards, &high_card_temp);
-    if(is_hand)
+  *high_card = RANK_NONE;
+  is_hand = is_four_of_a_kind(sorted_cards, high_card);
+  if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_FOUR_OF_A_KIND;
   }
 
-  is_hand = is_full_house(sorted_cards, &high_card_temp);
+  *high_card = RANK_NONE;
+  is_hand = is_full_house(sorted_cards, high_card);
   if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_FULL_HOUSE;
   }
-
-  is_hand = is_flush(private_cards, public_cards, &high_card_temp);
+  
+  *high_card = RANK_NONE;
+  is_hand = is_flush(private_cards, public_cards, high_card);
   if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_FLUSH;
   }
 
-  is_hand = is_straight(sorted_cards, &high_card_temp);
+  *high_card = RANK_NONE;
+  is_hand = is_straight(sorted_cards, high_card);
   if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_STRAIGHT;
   }
 
-  is_hand = is_three_of_a_kind(sorted_cards, &high_card_temp);
+  *high_card = RANK_NONE;
+  is_hand = is_three_of_a_kind(sorted_cards, high_card);
   if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_THREE_OF_A_KIND;
   }
 
-  is_hand = is_two_pair(sorted_cards, &high_card_temp);
+  *high_card = RANK_NONE;
+  is_hand = is_two_pair(sorted_cards, high_card);
   if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_TWO_PAIR;
   }
 
-  is_hand = is_pair(sorted_cards, &high_card_temp);
+  *high_card = RANK_NONE;
+  is_hand = is_pair(sorted_cards, high_card);
   if(is_hand)
   {
-    *high_card = high_card_temp;
     return RANK_PAIR;
   }
 
@@ -427,7 +426,7 @@ bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, 
 
     std::vector<Card> suit_counter[NUM_SUITS];
     uint32_t flush_suit = UNINITIALIZED;
-    int32_t  high_card_temp = RANK_NONE;
+    *high_card = RANK_NONE;
 
     // first discover if a flush exists
     for(uint32_t i = 0; i < ALL_CARDS_SIZE; i++)
@@ -451,15 +450,145 @@ bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, 
     uint32_t consecutive_counter = 1;
     std::vector<Card> consecutive_cards;
     consecutive_cards.push_back(flush_cards[0]);
-    /* finish this */
+
+    // duplicate all aces to be high and low
+    for(Card card : flush_cards)
+    {
+      if(card.rank == ACE_LOW)
+      {
+      flush_cards.push_back(Card(card.suit, ACE_HIGH));
+      }
+    }
+
+    for(uint32_t i = 1; i < flush_cards.size(); i++)
+    {
+      if(flush_cards.at(i).rank == (flush_cards.at(i - 1).rank + 1))
+      {
+	consecutive_counter += 1;
+	consecutive_cards.push_back(flush_cards.at(i));
+      }
+      else if(flush_cards.at(i).rank == (flush_cards.at(i - 1).rank))
+      {
+	consecutive_cards.push_back(flush_cards.at(i));
+      }
+      else
+      {
+	consecutive_counter = 1;
+	consecutive_cards.clear();
+      }
+
+      if(consecutive_counter >= 5)
+      {
+	*high_card = flush_cards.at(i).rank;
+      }
+    }
+
+    if(*high_card != RANK_NONE)
+    {
+      if(*high_card == ACE_HIGH)
+      {
+	*high_card = ACE_LOW;
+	return true;
+      }
+      else
+      {
+	return true;
+      }
+    }
+
+    return false;
+    
 }
-bool Limit_Holdem::is_four_of_a_kind(Card * sorted_cards, int32_t * high_card){}
-bool Limit_Holdem::is_full_house(Card * sorted_cards, int32_t * high_card){}
-bool Limit_Holdem::is_flush(Card * private_cards, Card * public_cards, int32_t * high_card){}
-bool Limit_Holdem::is_straight(Card * sorted_cards, int32_t * high_card){}
-bool Limit_Holdem::is_three_of_a_kind(Card * sorted_cards, int32_t * high_card){}
-bool Limit_Holdem::is_two_pair(Card * sorted_cards, int32_t * high_card){}
-bool Limit_Holdem::is_pair(Card * sorted_cards, int32_t * high_card){}
-uint32_t Limit_Holdem::get_high_card(Card * card_list, uint32_t list_size){}
+bool Limit_Holdem::is_four_of_a_kind(Card * sorted_cards, int32_t * high_card)
+{
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE - 3; i++)
+  {
+    if((sorted_cards[i].rank == sorted_cards[i+1].rank) && (sorted_cards[i].rank == sorted_cards[i+2].rank) && (sorted_cards[i].rank == sorted_cards[i+3].rank))
+    {
+      *high_card = sorted_cards[i].rank;
+      return true;
+    }
+  }
+
+  *high_card = RANK_NONE;
+  return false;
+}
+
+bool Limit_Holdem::is_full_house(Card * sorted_cards, int32_t * high_card)
+{
+  bool three_of_a_kind = false;
+  bool pair = false;
+  int32_t three_of_a_kind_rank = RANK_NONE;
+  int32_t pair_rank = RANK_NONE;
+  
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE - 2; i++)
+  {
+    // check if three of a kind exists
+    if((sorted_cards[i].rank == sorted_cards[i+1].rank) && (sorted_cards[i].rank == sorted_cards[i+2].rank))
+    {
+      three_of_a_kind = true;
+      three_of_a_kind_rank = sorted_cards[i].rank;
+      break;
+    }
+  }
+
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE - 1; i++)
+  {
+    // check if a pair exists separate from the three of a kind
+    if(sorted_cards[i].rank == sorted_cards[i+1].rank)
+    {
+      if(sorted_cards[i].rank != three_of_a_kind_rank)
+      {
+	pair = true;
+	pair_rank = sorted_cards[i].rank;
+      }
+    }
+  }
+
+  if(three_of_a_kind && pair)
+  {
+    if((three_of_a_kind_rank == ACE_LOW) || (pair_rank == ACE_LOW))
+    {
+      *high_card = ACE_LOW
+    }
+    else if(three_of_a_kind_rank > pair_rank)
+    {
+      *high_card = three_of_a_kind_rank;
+    }
+    else
+    {
+      *high_card = pair_rank;
+    }
+    return true;
+  }
+
+  *high_card = RANK_NONE;
+  return false;
+}
+
+bool Limit_Holdem::is_flush(Card * private_cards, Card * public_cards, int32_t * high_card)
+{
+  return false;
+}
+bool Limit_Holdem::is_straight(Card * sorted_cards, int32_t * high_card)
+{
+    return false;
+}
+bool Limit_Holdem::is_three_of_a_kind(Card * sorted_cards, int32_t * high_card)
+{
+  return false;
+}
+bool Limit_Holdem::is_two_pair(Card * sorted_cards, int32_t * high_card)
+{
+  return false;
+}
+bool Limit_Holdem::is_pair(Card * sorted_cards, int32_t * high_card)
+{
+  return false;
+}
+uint32_t Limit_Holdem::get_high_card(Card * card_list, uint32_t list_size)
+{
+  return 0;
+}
 
 
