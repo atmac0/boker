@@ -15,6 +15,7 @@ const uint32_t DECK_SIZE = 52;
 const uint32_t NUM_SUITS = 4;
 const uint32_t NUM_RANKS = 14;
 
+const uint32_t NO_SUIT  = -1;
 const uint32_t SPADE    = 0;
 const uint32_t CLUB     = 1;
 const uint32_t DIAMONDS = 2;
@@ -33,7 +34,7 @@ const uint32_t NINE     = 9;
 const uint32_t TEN      = 10;
 const uint32_t JACK     = 11;
 const uint32_t QUEEN    = 12;
-const uint32_t KIND     = 13;
+const uint32_t KING     = 13;
 const uint32_t ACE_HIGH = 14;
 
 

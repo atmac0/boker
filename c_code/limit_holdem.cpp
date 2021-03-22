@@ -549,7 +549,7 @@ bool Limit_Holdem::is_full_house(Card * sorted_cards, int32_t * high_card)
   {
     if((three_of_a_kind_rank == ACE_LOW) || (pair_rank == ACE_LOW))
     {
-      *high_card = ACE_LOW
+      *high_card = ACE_LOW;
     }
     else if(three_of_a_kind_rank > pair_rank)
     {
@@ -568,27 +568,206 @@ bool Limit_Holdem::is_full_house(Card * sorted_cards, int32_t * high_card)
 
 bool Limit_Holdem::is_flush(Card * private_cards, Card * public_cards, int32_t * high_card)
 {
-  return false;
+  uint32_t suit_counter[NUM_SUITS] = {0};
+  int32_t  flush_suit = NO_SUIT;
+  *high_card = RANK_NONE;
+
+  /* find the cards in the flush, if one exists */
+  for(uint32_t i = 0; i <  COMMUNITY_SIZE; i++)
+  {
+    uint32_t current_card_suit = public_cards[i].suit;
+    suit_counter[current_card_suit]++;
+    if(suit_counter[current_card_suit] == 5)
+    {
+      flush_suit = current_card_suit;
+    }
+  }
+  for(uint32_t i = 0; i < HAND_SIZE; i++)
+  {
+    uint32_t current_card_suit = private_cards[i].suit;
+    suit_counter[current_card_suit]++;
+    if(suit_counter[current_card_suit] == 5)
+    {
+      flush_suit = current_card_suit;
+    }
+  }
+
+  if(flush_suit != NO_SUIT)
+  {
+    /* find the players high card in the suit in hand, if any */
+    for(uint32_t i = 0; i < HAND_SIZE; i++)
+    {
+      if(private_cards[i].suit == flush_suit)
+      {
+	/* edge case for ace high card */
+	if(private_cards[i].rank == ACE_LOW)
+	{
+	  *high_card = ACE_LOW;
+	  return true;
+	}
+
+	if(*high_card == RANK_NONE)
+	{
+	  *high_card = private_cards[i].rank;
+	}
+	else if(private_cards[i].rank > *high_card)
+	{
+	  *high_card = private_cards[i].rank;
+	}
+      }
+    }
+  }
+
+  if(flush_suit != NO_SUIT)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
+
 bool Limit_Holdem::is_straight(Card * sorted_cards, int32_t * high_card)
 {
+  uint32_t consecutive_counter = 1;
+  uint32_t previous_rank = sorted_cards[0].rank;
+  *high_card = RANK_NONE;
+  
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE; i++)
+  {
+    if(sorted_cards[i].rank == previous_rank + 1)
+    {
+      consecutive_counter++;
+    }
+    else if(sorted_cards[i].rank == previous_rank)
+    {
+      /* pass */
+    }
+    /* account for ace being stored as 0 */
+    else if( (previous_rank == KING) && (sorted_cards[0].rank == ACE_LOW) )
+    {
+      consecutive_counter++;
+    }
+    else
+    {
+      consecutive_counter = 1;
+    }
+
+    if(consecutive_counter >= 5)
+    {
+      *high_card = sorted_cards[i].rank;
+    }
+
+    previous_rank = sorted_cards[i].rank;
+  }
+
+  if(*high_card != RANK_NONE)
+  {
+    return true;
+  }
+  else
+  {
     return false;
+  }
 }
+
 bool Limit_Holdem::is_three_of_a_kind(Card * sorted_cards, int32_t * high_card)
 {
-  return false;
+  *high_card = RANK_NONE;
+  
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE - 2; i++)
+  {
+    if( (sorted_cards[i].rank == sorted_cards[i+1].rank) && (sorted_cards[i].rank == sorted_cards[i+2].rank) )
+    {
+      if(sorted_cards[i].rank == ACE_LOW)
+      {
+	*high_card = ACE_LOW;
+	return true;
+      }
+      *high_card = sorted_cards[i].rank;
+    }
+  }
+
+  if(*high_card != RANK_NONE)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 bool Limit_Holdem::is_two_pair(Card * sorted_cards, int32_t * high_card)
 {
-  return false;
+  uint32_t pairs_found = 0;
+  *high_card = RANK_NONE;
+
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE; i++)
+  {
+    if(sorted_cards[i].rank == sorted_cards[i+1].rank)
+    {
+      pairs_found++;
+      if( (sorted_cards[i].rank > *high_card) && (*high_card != ACE_LOW) )
+      {
+	*high_card = sorted_cards[i].rank;
+      }
+    }
+  }
+
+  if(pairs_found >= 2)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
+
 bool Limit_Holdem::is_pair(Card * sorted_cards, int32_t * high_card)
 {
-  return false;
+  *high_card = RANK_NONE;
+
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE; i++)
+  {
+    if(sorted_cards[i].rank == sorted_cards[i+1].rank)
+    {
+      if( (sorted_cards[i].rank > *high_card) && (*high_card != ACE_LOW) )
+      {
+	*high_card = sorted_cards[i].rank;
+      }
+    }
+  }
+
+  if(*high_card != RANK_NONE)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
+
 uint32_t Limit_Holdem::get_high_card(Card * card_list, uint32_t list_size)
 {
-  return 0;
+  uint32_t max_rank = card_list[0].rank;
+
+  if(max_rank == ACE_LOW)
+  {
+    return ACE_LOW;
+  }
+  
+  for(uint32_t i = 0; i < ALL_CARDS_SIZE; i++)
+  {
+    if(card_list[i].rank > max_rank)
+    {
+      max_rank = card_list[i].rank;
+    }
+  }
+
+  return max_rank;
 }
 
 
