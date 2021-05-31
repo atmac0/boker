@@ -6,6 +6,83 @@ void card_class_UT()
 {
   bool success = true;
 
+  Card card1, card2, card3, card4;
+  card1.rank = 0;
+  card1.suit = 0;
+
+  card2.rank = 10;
+  card2.suit = 0;
+
+  card3.rank = 0;
+  card3.suit = 1;
+
+  card4.rank = 5;
+  card4.suit = 1;
+
+  if(card2 < card1)
+  {
+    std::cout << "card_class_UT failure: card2 less than card1\n";
+    success = false;
+  }
+  if(card3 < card1)
+  {
+    std::cout << "card_class_UT failure: card3 less than card1\n";
+    success = false;
+  }
+  if(card4 < card1)
+  {
+    std::cout << "card_class_UT failure: card4 less than card1\n";
+    success = false;
+  }
+  if(card3 < card2)
+  {
+    std::cout << "card_class_UT failure: card3 less than card2\n";
+    success = false;
+  }
+  if(card4 < card2)
+  {
+    std::cout << "card_class_UT failure: card4 less than card2\n";
+    success = false;
+  }
+  if(card4 < card3)
+  {
+    std::cout << "card_class_UT failure: card4 less than card3\n";
+    success = false;
+  }
+  
+
+  if(card1 > card2)
+  {
+    std::cout << "card_class_UT failure: card1 greater than card2\n";
+    success = false;
+  }
+  if(card1 > card3)
+  {
+    std::cout << "card_class_UT failure: card1 greater than card3\n";
+    success = false;
+  }
+  if(card1 > card4)
+  {
+    std::cout << "card_class_UT failure: card1 greater than card4\n";
+    success = false;
+  }
+  if(card2 > card3)
+  {
+    std::cout << "card_class_UT failure: card2 greater than card3\n";
+    success = false;
+  }
+  if(card2 > card4)
+  {
+    std::cout << "card_class_UT failure: card2 greater than card4\n";
+    success = false;
+  }
+  if(card3 > card4)
+  {
+    std::cout << "card_class_UT failure: card3 greater than card4\n";
+    success = false;
+  }
+
+  
   for(uint32_t i = 0; i < NUM_RANKS; i++)
   {
     for(uint32_t j = 0; j < NUM_SUITS; j++)
@@ -24,7 +101,8 @@ void card_class_UT()
       }
     }
   }
-
+  
+  
   if(success == true)
   {
     std::cout <<"card_class_UT PASS\n";
@@ -67,19 +145,15 @@ void sort_cards_UT()
     current_card = cards[i];
     next_card = cards[i+1];
 
-    if(current_card.rank > next_card.rank)
+    if(current_card.suit > next_card.suit)
+    {
+      std::cout <<"Failure in sort_cards_UT: current card rank: " << current_card.suit << ", next card rank: " << next_card.suit << "\n";
+      success = false;
+    }
+    else if( (current_card.rank > next_card.rank) && (current_card.suit == next_card.suit) )
     {
       std::cout <<"Failure in sort_cards_UT: current card rank: " << current_card.rank << ", next card rank: " << next_card.rank << "\n";
       success = false;
-    }
-
-    if(current_card.rank == next_card.rank)
-    {
-      if(current_card.suit > next_card.suit)
-      {
-	std::cout <<"Failure in sort_cards_UT: current card suit: " << current_card.suit << ", next card suit: " << next_card.suit << "\n";
-	success = false;
-      }
     }
   }
 
@@ -89,7 +163,11 @@ void sort_cards_UT()
   }
   else
   {
-    std::cout <<"sort_cards_UT FAILED\n";  
+    for(uint32_t i = 0; i < num_cards; i++)
+    {
+      std::cout << "Rank: " << cards[i].rank << "; Suit: " << cards[i].suit << "\n";
+    }
+    std::cout <<"sort_cards_UT FAILED\n";
   }
 }
 

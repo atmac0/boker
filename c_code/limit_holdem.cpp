@@ -47,7 +47,7 @@ void Limit_Holdem::calculate_winner()
   int32_t winning_player_rank = RANK_NONE;
   int32_t winning_player_high_card, high_card;
   std::vector<uint32_t> winning_players;
-  uint32_t rank;
+  int32_t rank;
 
   for(uint32_t player_num = 0; player_num < NUM_PLAYERS; player_num++)
   {
@@ -145,7 +145,7 @@ void Limit_Holdem::uncheck_all()
 uint32_t Limit_Holdem::next_acting_player()
 {
   // search from the current player up
-  for(uint32_t player_num = acting_player; player_num < NUM_PLAYERS; player_num++)
+  for(int32_t player_num = acting_player; player_num < NUM_PLAYERS; player_num++)
   {
     Player player = players[player_num];
     if(player.number == acting_player)
@@ -159,7 +159,7 @@ uint32_t Limit_Holdem::next_acting_player()
   }
 
   // search from the first player to the current player
-  for(uint32_t player_num = acting_player; player_num < NUM_PLAYERS; player_num++)
+  for(int32_t player_num = acting_player; player_num < NUM_PLAYERS; player_num++)
   {
     Player player = players[player_num];
     if(player.number == acting_player)
@@ -193,10 +193,10 @@ std::vector<int32_t> Limit_Holdem::calculate_valid_bets(bool for_children)
     valid_bets.push_back(CHECK);
   }
 
-  int32_t contribution_diff = contribution - current_player.bet;
+  int64_t contribution_diff = contribution - current_player.bet;
 
   // player can match current contribution
-  if( for_children || ((contribution_diff > 0) && (current_player.cash > contribution_diff)))
+  if( for_children || ((contribution_diff > 0) && ((int64_t)current_player.cash > contribution_diff)))
   {
     valid_bets.push_back(contribution_diff);
   }
@@ -204,7 +204,7 @@ std::vector<int32_t> Limit_Holdem::calculate_valid_bets(bool for_children)
   // player raises
   if(bet_counter < 4)
   {
-    if( for_children || (current_player.cash > (contribution_diff + BIG_BLIND)))
+    if( for_children || ((int64_t)current_player.cash > (contribution_diff + BIG_BLIND)))
     {
       valid_bets.push_back(contribution_diff + BIG_BLIND);
     }
@@ -231,7 +231,7 @@ void Limit_Holdem::place_bet(uint32_t bet_size)
 
     if(players_remaining == 1)
     {
-      game_complete == true;
+      game_complete = true;
       players[next_acting_player()].winner = true;
       return;
     }
@@ -425,7 +425,7 @@ bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, 
     Card * sorted_cards = get_all_cards_sorted(private_cards, public_cards);
 
     std::vector<Card> suit_counter[NUM_SUITS];
-    uint32_t flush_suit = UNINITIALIZED;
+    suit_t flush_suit = SUIT_NONE;
     *high_card = RANK_NONE;
 
     // first discover if a flush exists
@@ -438,7 +438,7 @@ bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, 
       }
     }
 
-    if(flush_suit == UNINITIALIZED)
+    if(flush_suit == SUIT_NONE)
     {
       return false;
     }

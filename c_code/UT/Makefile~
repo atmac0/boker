@@ -1,0 +1,17 @@
+CC = g++
+CFLAGS = -g -Wall -std=c++0x -Iinclude 
+
+all: UT_limit_AI.o UT_deck.o UT_limit_holdem.o
+	$(CC) $(CFLAGS) -o UT_runner UT_runner.cpp UT_limit_AI.o UT_deck.o UT_limit_holdem.o	
+
+UT_limit_AI.o: UT_limit_AI.cpp UT_limit_AI.h ../deck.h ../limit_holdem.h
+	$(CC) $(CFLAGS) -c UT_limit_AI.cpp
+
+UT_deck.o: ../deck.h UT_deck.h
+	$(CC) $(CFLAGS) -c UT_deck.cpp
+
+UT_limit_holdem.o: UT_limit_holdem.cpp UT_limit_holdem.h ../limit_holdem.h 
+	$(CC) $(CFLAGS) -c UT_limit_holdem.cpp
+clean:
+	rm UT_runner *.o
+

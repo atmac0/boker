@@ -9,43 +9,7 @@
 #include <string>
 
 #include "deck.h"
-
-// bet values
-#define BIG_BLIND     2
-#define LITTLE_BLIND  1
-#define CHECK         0
-#define FOLD         -1
-
-// hand rank values
-#define RANK_STRAIGHT_FLUSH   8
-#define RANK_FOUR_OF_A_KIND   7
-#define RANK_FULL_HOUSE       6
-#define RANK_FLUSH            5
-#define RANK_STRAIGHT         4
-#define RANK_THREE_OF_A_KIND  3
-#define RANK_TWO_PAIR         2
-#define RANK_PAIR             1
-#define RANK_HIGH_CARD        0
-#define RANK_NONE            -1
-
-#define PREFLOP 0
-#define FLOP    1
-#define TURN    2
-#define RIVER   3
-
-#define NUM_PLAYERS 2
-
-#define NUM_SUITS 4
-
-#define HAND_SIZE 2
-#define FLOP_SIZE 3
-#define COMMUNITY_SIZE 5
-#define ALL_CARDS_SIZE 7
-
-#define TURN_COMMUNITY_POSITION 3
-#define RIVER_COMMUNITY_POSITION 4
-
-#define UNINITIALIZED 0xDEADBEEF
+#include "types.h"
 
 class Player
 {
@@ -57,7 +21,7 @@ public:
   bool checked;
   uint32_t bet;
   uint32_t cash;
-  int32_t number;
+  player_num_t number;
 
   Player()
   { 
@@ -84,7 +48,7 @@ class Limit_Holdem
 {
 public:
   Player players[NUM_PLAYERS];
-  uint32_t acting_player;
+  player_num_t acting_player;
   uint32_t players_remaining;
 
   uint32_t pot;
