@@ -1,15 +1,19 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#typedef unsigned int  uint32_t
-#typedef unsigned long uint64_t
+typedef unsigned int  uint32_t;
+typedef unsigned long uint64_t;
 
-#typedef int  int32_t
-#typedef long int64_t
+typedef int  int32_t;
+typedef long int64_t;
 
-#typedef int32_t  suit_t
-#typedef int32_t  rank_t
-#typedef int32_t  player_num_t
+typedef int32_t  card_suit_t;
+typedef int32_t  card_rank_t;
+typedef int32_t  player_num_t;
+
+typedef int32_t  bet_t;
+
+typedef uint32_t hand_rank_t;
 
 // bet values
 #define BIG_BLIND     2
@@ -36,8 +40,6 @@
 
 #define NUM_PLAYERS 2
 
-#define NUM_SUITS 4
-
 #define HAND_SIZE 2
 #define FLOP_SIZE 3
 #define COMMUNITY_SIZE 5
@@ -47,32 +49,32 @@
 #define RIVER_COMMUNITY_POSITION 4
 
 
-#define DECK_SIZE = 52;
+#define DECK_SIZE 52
 
-#define NUM_SUITS = 4;
-#define NUM_RANKS = 14;
+#define NUM_SUITS 4
+#define NUM_RANKS 14
 
-#define NO_SUIT  = -1;
-#define SPADE    = 0;
-#define CLUB     = 1;
-#define DIAMONDS = 2;
-#define HEARTS   = 3;
+#define NO_SUIT  -1
+#define SPADE     0
+#define CLUB      1
+#define DIAMONDS  2
+#define HEARTS    3
 
-#define ACE_LOW  = 0;
-#define ONE      = 1;
-#define TWO      = 2;
-#define THREE    = 3;
-#define FOUR     = 4;
-#define FIVE     = 5;
-#define SIX      = 6;
-#define SEVEN    = 7;
-#define EIGHT    = 8;
-#define NINE     = 9;
-#define TEN      = 10;
-#define JACK     = 11;
-#define QUEEN    = 12;
-#define KING     = 13;
-#define ACE_HIGH = 14;
+#define ACE_LOW   0
+#define ONE       1
+#define TWO       2
+#define THREE     3
+#define FOUR      4
+#define FIVE      5
+#define SIX       6
+#define SEVEN     7
+#define EIGHT     8
+#define NINE      9
+#define TEN       10
+#define JACK      11
+#define QUEEN     12
+#define KING      13
+#define ACE_HIGH  14
 
 #define UNINITIALIZED 0xDEADBEEF
 

@@ -15,8 +15,8 @@
 class Card
 {
 public:
-  suit_t suit;
-  rank_t rank;
+  card_suit_t suit;
+  card_rank_t rank;
 
   // default constructor
   Card()
@@ -25,7 +25,7 @@ public:
     Card::rank = 0;
   }
   
-  Card(suit_t suit, rank_t rank)
+  Card(card_suit_t suit, card_rank_t rank)
   {
     Card::suit = suit;
     Card::rank = rank;
@@ -69,9 +69,9 @@ public:
   {
     deck_counter = 0;
     
-    for(rank_t rank = 0; rank < NUM_RANKS; rank++)
+    for(card_rank_t rank = 0; rank < NUM_RANKS; rank++)
     {
-      for(suit_t suit = 0; suit < NUM_SUITS; suit++)
+      for(card_suit_t suit = 0; suit < NUM_SUITS; suit++)
       {
 	deck[deck_counter].suit = suit;
 	deck[deck_counter].rank = rank;

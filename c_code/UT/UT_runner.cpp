@@ -5,6 +5,7 @@
 int main()
 {
   deck_UT();
+  limit_holdem_UT();
   
   return 0;
 }

@@ -219,7 +219,7 @@ first, calculate to total players contribution to the pot for the game.
 then, see if this contribution is equal to the current contribution
 if greater, see if the increase (raise amount) is valid (i.e. 1 big blind), and that no more than 4 bets have been made this round. If it is, increment the bet counter
 */    
-void Limit_Holdem::place_bet(uint32_t bet_size)
+void Limit_Holdem::place_bet(bet_t bet_size)
 {
   Player * p_current_player = &players[acting_player];
 
@@ -354,7 +354,7 @@ Card * Limit_Holdem::get_all_cards_sorted(Card * private_cards, Card * public_ca
    6: full house
    7: four of a kind
    8: straight flush */
-uint32_t Limit_Holdem::get_hand_rank(Card * private_cards, Card * public_cards, int32_t * high_card)
+hand_rank_t Limit_Holdem::get_hand_rank(Card * private_cards, Card * public_cards, card_rank_t * high_card)
 {
   Card * sorted_cards = get_all_cards_sorted(private_cards, public_cards);
   
@@ -420,12 +420,12 @@ uint32_t Limit_Holdem::get_hand_rank(Card * private_cards, Card * public_cards, 
   return get_high_card(sorted_cards, ALL_CARDS_SIZE);
 }
 
-bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, int32_t * high_card)
+bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, card_rank_t * high_card)
 {
     Card * sorted_cards = get_all_cards_sorted(private_cards, public_cards);
 
     std::vector<Card> suit_counter[NUM_SUITS];
-    suit_t flush_suit = SUIT_NONE;
+    card_suit_t flush_suit = NO_SUIT;
     *high_card = RANK_NONE;
 
     // first discover if a flush exists
@@ -438,7 +438,7 @@ bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, 
       }
     }
 
-    if(flush_suit == SUIT_NONE)
+    if(flush_suit == NO_SUIT)
     {
       return false;
     }
@@ -499,7 +499,7 @@ bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, 
     return false;
     
 }
-bool Limit_Holdem::is_four_of_a_kind(Card * sorted_cards, int32_t * high_card)
+bool Limit_Holdem::is_four_of_a_kind(Card * sorted_cards, card_rank_t * high_card)
 {
   for(uint32_t i = 0; i < ALL_CARDS_SIZE - 3; i++)
   {
@@ -514,7 +514,7 @@ bool Limit_Holdem::is_four_of_a_kind(Card * sorted_cards, int32_t * high_card)
   return false;
 }
 
-bool Limit_Holdem::is_full_house(Card * sorted_cards, int32_t * high_card)
+bool Limit_Holdem::is_full_house(Card * sorted_cards, card_rank_t * high_card)
 {
   bool three_of_a_kind = false;
   bool pair = false;
@@ -566,7 +566,7 @@ bool Limit_Holdem::is_full_house(Card * sorted_cards, int32_t * high_card)
   return false;
 }
 
-bool Limit_Holdem::is_flush(Card * private_cards, Card * public_cards, int32_t * high_card)
+bool Limit_Holdem::is_flush(Card * private_cards, Card * public_cards, card_rank_t * high_card)
 {
   uint32_t suit_counter[NUM_SUITS] = {0};
   int32_t  flush_suit = NO_SUIT;
@@ -628,10 +628,10 @@ bool Limit_Holdem::is_flush(Card * private_cards, Card * public_cards, int32_t *
   }
 }
 
-bool Limit_Holdem::is_straight(Card * sorted_cards, int32_t * high_card)
+bool Limit_Holdem::is_straight(Card * sorted_cards, card_rank_t * high_card)
 {
   uint32_t consecutive_counter = 1;
-  uint32_t previous_rank = sorted_cards[0].rank;
+  card_rank_t previous_rank = sorted_cards[0].rank;
   *high_card = RANK_NONE;
   
   for(uint32_t i = 0; i < ALL_CARDS_SIZE; i++)
@@ -672,7 +672,7 @@ bool Limit_Holdem::is_straight(Card * sorted_cards, int32_t * high_card)
   }
 }
 
-bool Limit_Holdem::is_three_of_a_kind(Card * sorted_cards, int32_t * high_card)
+bool Limit_Holdem::is_three_of_a_kind(Card * sorted_cards, card_rank_t * high_card)
 {
   *high_card = RANK_NONE;
   
@@ -698,7 +698,7 @@ bool Limit_Holdem::is_three_of_a_kind(Card * sorted_cards, int32_t * high_card)
     return false;
   }
 }
-bool Limit_Holdem::is_two_pair(Card * sorted_cards, int32_t * high_card)
+bool Limit_Holdem::is_two_pair(Card * sorted_cards, card_rank_t * high_card)
 {
   uint32_t pairs_found = 0;
   *high_card = RANK_NONE;
@@ -725,7 +725,7 @@ bool Limit_Holdem::is_two_pair(Card * sorted_cards, int32_t * high_card)
   }
 }
 
-bool Limit_Holdem::is_pair(Card * sorted_cards, int32_t * high_card)
+bool Limit_Holdem::is_pair(Card * sorted_cards, card_rank_t * high_card)
 {
   *high_card = RANK_NONE;
 
@@ -752,7 +752,7 @@ bool Limit_Holdem::is_pair(Card * sorted_cards, int32_t * high_card)
 
 uint32_t Limit_Holdem::get_high_card(Card * card_list, uint32_t list_size)
 {
-  uint32_t max_rank = card_list[0].rank;
+  card_rank_t max_rank = card_list[0].rank;
 
   if(max_rank == ACE_LOW)
   {

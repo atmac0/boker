@@ -83,9 +83,9 @@ void card_class_UT()
   }
 
   
-  for(uint32_t i = 0; i < NUM_RANKS; i++)
+  for(card_rank_t i = 0; i < NUM_RANKS; i++)
   {
-    for(uint32_t j = 0; j < NUM_SUITS; j++)
+    for(card_suit_t j = 0; j < NUM_SUITS; j++)
     {
       Card test_card = Card(j, i);
 
@@ -105,11 +105,11 @@ void card_class_UT()
   
   if(success == true)
   {
-    std::cout <<"card_class_UT PASS\n";
+    std::cout <<"card_class_UT PASSED\n";
   }
   else
   {
-    std::cout <<"card_class_UT FAIL\n";
+    std::cout <<"card_class_UT FAILED\n";
   }
 }
 
