@@ -115,7 +115,31 @@ void card_class_UT()
 
 void deck_class_UT()
 {
-    std::cout <<"deck_class_UT SKIPPED\n";  
+  bool success = true;
+  
+  Deck test_deck = Deck();
+
+  Card test_card = test_deck.draw();
+
+  if( (test_card.suit != SPADE) && (test_card.rank != ACE_LOW) )
+  {
+    std::cout << "deck_class_UT FAILURE: first drawn card expectd to have a suit of " << SPADE << " and a rank of " << ACE_LOW << ". Card drawn has a suit of " << test_card.suit << " and a rank of " << test_card.rank << ".\n";
+    success = false;
+  }
+
+  test_deck = Deck();
+
+  test_deck.shuffle();
+
+
+  if(success == true)
+  {
+    std::cout << "deck_class_UT PASSED\n";
+  }
+  else
+  {
+    std::cout << "deck_class_UT FAILED\n";
+  }
 }
 
 void sort_cards_UT()

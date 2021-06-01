@@ -52,7 +52,7 @@ typedef uint32_t hand_rank_t;
 #define DECK_SIZE 52
 
 #define NUM_SUITS 4
-#define NUM_RANKS 14
+#define NUM_RANKS 13
 
 #define NO_SUIT  -1
 #define SPADE     0
