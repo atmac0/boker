@@ -34,14 +34,14 @@ void card_class_UT()
     std::cout << "card_class_UT failure: card4 less than card1\n";
     success = false;
   }
-  if(card3 < card2)
+  if(card2 < card3)
   {
-    std::cout << "card_class_UT failure: card3 less than card2\n";
+    std::cout << "card_class_UT failure: card2 less than card3\n";
     success = false;
   }
-  if(card4 < card2)
+  if(card2 < card4)
   {
-    std::cout << "card_class_UT failure: card4 less than card2\n";
+    std::cout << "card_class_UT failure: card2 less than card4\n";
     success = false;
   }
   if(card4 < card3)
@@ -66,14 +66,14 @@ void card_class_UT()
     std::cout << "card_class_UT failure: card1 greater than card4\n";
     success = false;
   }
-  if(card2 > card3)
+  if(card2 < card3)
   {
     std::cout << "card_class_UT failure: card2 greater than card3\n";
     success = false;
   }
-  if(card2 > card4)
+  if(card4 > card2)
   {
-    std::cout << "card_class_UT failure: card2 greater than card4\n";
+    std::cout << "card_class_UT failure: card4 greater than card2\n";
     success = false;
   }
   if(card3 > card4)
@@ -169,14 +169,14 @@ void sort_cards_UT()
     current_card = cards[i];
     next_card = cards[i+1];
 
-    if(current_card.suit > next_card.suit)
-    {
-      std::cout <<"Failure in sort_cards_UT: current card rank: " << current_card.suit << ", next card rank: " << next_card.suit << "\n";
-      success = false;
-    }
-    else if( (current_card.rank > next_card.rank) && (current_card.suit == next_card.suit) )
+    if(current_card.rank > next_card.rank)
     {
       std::cout <<"Failure in sort_cards_UT: current card rank: " << current_card.rank << ", next card rank: " << next_card.rank << "\n";
+      success = false;
+    }
+    else if( (current_card.rank == next_card.rank) && (current_card.suit > next_card.suit) )
+    {
+      std::cout <<"Failure in sort_cards_UT: current card suit: " << current_card.suit << ", next card suit: " << next_card.suit << "\n";
       success = false;
     }
   }

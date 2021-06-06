@@ -76,7 +76,7 @@ public:
   bool is_two_pair(Card * sorted_cards, card_rank_t * high_card);
   bool is_pair(Card * sorted_cards, card_rank_t * high_card);
   uint32_t get_high_card(Card * card_list, uint32_t list_size);
-
+  Card * get_all_cards_sorted(Card * private_cards, Card * public_cards);
   
   Limit_Holdem()
   {
@@ -111,8 +111,6 @@ private:
   void end_the_game();
   void goto_next_game_phase();
   bool all_have_checked();
-
-  Card * get_all_cards_sorted(Card * private_cards, Card * public_cards);
   
   uint32_t community_counter; // num cards dealt to the community
   

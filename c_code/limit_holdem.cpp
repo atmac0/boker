@@ -501,9 +501,10 @@ bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, 
 }
 bool Limit_Holdem::is_four_of_a_kind(Card * sorted_cards, card_rank_t * high_card)
 {
+  
   for(uint32_t i = 0; i < ALL_CARDS_SIZE - 3; i++)
   {
-    if((sorted_cards[i].rank == sorted_cards[i+1].rank) && (sorted_cards[i].rank == sorted_cards[i+2].rank) && (sorted_cards[i].rank == sorted_cards[i+3].rank))
+    if((sorted_cards[i].rank == sorted_cards[i+1].rank) && (sorted_cards[i+1].rank == sorted_cards[i+2].rank) && (sorted_cards[i+2].rank == sorted_cards[i+3].rank))
     {
       *high_card = sorted_cards[i].rank;
       return true;
@@ -680,12 +681,15 @@ bool Limit_Holdem::is_three_of_a_kind(Card * sorted_cards, card_rank_t * high_ca
   {
     if( (sorted_cards[i].rank == sorted_cards[i+1].rank) && (sorted_cards[i].rank == sorted_cards[i+2].rank) )
     {
-      if(sorted_cards[i].rank == ACE_LOW)
+      if(sorted_cards[i].rank == ACE_HIGH)
       {
 	*high_card = ACE_LOW;
 	return true;
       }
-      *high_card = sorted_cards[i].rank;
+      else
+      {
+	*high_card = sorted_cards[i].rank;
+      }
     }
   }
 

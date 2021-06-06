@@ -33,11 +33,11 @@ public:
   
   bool operator< (const Card &other) const
   {
-    if(suit < other.suit)
+    if(rank < other.rank)
     {
       return true;
     }
-    if((suit == other.suit) && (rank < other.rank))
+    if((rank == other.rank) && (suit < other.suit))
     {
       return true;
     }
@@ -46,11 +46,11 @@ public:
 
   bool operator> (const Card &other) const
   {
-    if(suit > other.suit)
+    if(rank > other.rank)
     {
       return true;
     }
-    if((suit == other.suit) && (rank > other.rank))
+    if((rank == other.rank) && (suit > other.suit))
     {
       return true;
     }
