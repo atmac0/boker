@@ -7,7 +7,9 @@ void get_hand_rank_UT()
   hand_rank_t hand_rank;
   card_rank_t high_card;
 
-  Limit_Holdem holdem = Limit_Holdem();
+  bet_t cash_stacks[NUM_PLAYERS] = {50 * BIG_BLIND, 50 * BIG_BLIND};
+  
+  Limit_Holdem holdem = Limit_Holdem(cash_stacks);
 
   Card straight_flush_hand_list[2]   = {Card(0,3), Card(0,4)};
   Card straight_flush_public_list[5] = {Card(0,5), Card(0,6), Card(0,7), Card(2,12), Card(0,3)};
@@ -202,7 +204,9 @@ void get_all_cards_sorted_UT()
   Card private_cards[] = {Card(0,3), Card(1,3)};
   Card public_cards[]  = {Card(2,3), Card(2,12), Card(3,7), Card(1,12), Card(3,3)};
   
-  Limit_Holdem holdem = Limit_Holdem();
+  bet_t cash_stacks[NUM_PLAYERS] = {50 * BIG_BLIND, 50 * BIG_BLIND};
+  
+  Limit_Holdem holdem = Limit_Holdem(cash_stacks);
 
   Card * sorted_cards = holdem.get_all_cards_sorted(private_cards, public_cards);
 

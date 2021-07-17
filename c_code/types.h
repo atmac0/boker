@@ -13,7 +13,7 @@ typedef int32_t  player_num_t;
 
 typedef int32_t  bet_t;
 
-typedef uint32_t hand_rank_t;
+typedef int32_t hand_rank_t;
 
 // bet values
 #define BIG_BLIND     2
@@ -38,7 +38,7 @@ typedef uint32_t hand_rank_t;
 #define TURN    2
 #define RIVER   3
 
-#define NUM_PLAYERS 2
+#define NUM_PLAYERS 3
 
 #define HAND_SIZE 2
 #define FLOP_SIZE 3

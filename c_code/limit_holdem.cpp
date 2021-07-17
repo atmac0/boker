@@ -14,12 +14,14 @@ void Limit_Holdem::deal_hands()
 
 void Limit_Holdem::deal_community()
 {
+  
   if(game_phase == PREFLOP)
   {
     // deal flop
     for(uint32_t i = 0; i < FLOP_SIZE; i++)
     {
       community_cards[i] = deck.draw();
+      community_counter++;
     }
     sort_card_list(community_cards, FLOP_SIZE); // sort the flop
     game_phase = FLOP;
@@ -27,11 +29,13 @@ void Limit_Holdem::deal_community()
   else if(game_phase == FLOP) // deal turn
   {
     community_cards[TURN_COMMUNITY_POSITION] = deck.draw();
+    community_counter++;
     game_phase = TURN;
   }
   else if(game_phase == TURN) // deal river
   {
     community_cards[RIVER_COMMUNITY_POSITION] = deck.draw();
+    community_counter++;
     game_phase = RIVER;
   }
   else
@@ -44,19 +48,22 @@ void Limit_Holdem::deal_community()
 // calculate the winner of the game. Find the rank and highcard of each players hand. The player with the highest rank wins. If two players tie in rank, player with the high card wins. If the high card ties, the game is a tie
 void Limit_Holdem::calculate_winner()
 {
-  int32_t winning_player_rank = RANK_NONE;
-  int32_t winning_player_high_card, high_card;
-  std::vector<uint32_t> winning_players;
-  int32_t rank;
+  hand_rank_t winning_player_rank = RANK_NONE;
+  card_rank_t winning_player_high_card, high_card;
+  std::vector<player_num_t> winning_players;
+  hand_rank_t rank;
 
-  for(uint32_t player_num = 0; player_num < NUM_PLAYERS; player_num++)
+  std::cout << "Calculating winner...\n";
+  for(player_num_t player_num = 0; player_num < NUM_PLAYERS; player_num++)
   {
     Player player = players[player_num];
 
     if(!player.folded)
     {
       rank = get_hand_rank(player.hand, community_cards, &high_card);
-
+      std::cout << "Player " << player_num << " hand rank is: " << rank << "\n";
+      std::cout << "Player " << player_num << " high card is: " << high_card << "\n";
+      
       // current player has a better rank than the previous highest
       if(rank > winning_player_rank)
       {
@@ -113,7 +120,7 @@ void Limit_Holdem::calculate_winner()
   
 }
 
-void Limit_Holdem::set_winner(std::vector<uint32_t> winning_players)
+void Limit_Holdem::set_winner(std::vector<player_num_t> winning_players)
 {
   for(uint32_t player_num = 0; player_num < NUM_PLAYERS; player_num++)
   {
@@ -142,10 +149,10 @@ void Limit_Holdem::uncheck_all()
   }
 }
 
-uint32_t Limit_Holdem::next_acting_player()
+player_num_t Limit_Holdem::next_acting_player()
 {
   // search from the current player up
-  for(int32_t player_num = acting_player; player_num < NUM_PLAYERS; player_num++)
+  for(player_num_t player_num = acting_player; player_num < NUM_PLAYERS; player_num++)
   {
     Player player = players[player_num];
     if(player.number == acting_player)
@@ -159,7 +166,7 @@ uint32_t Limit_Holdem::next_acting_player()
   }
 
   // search from the first player to the current player
-  for(int32_t player_num = acting_player; player_num < NUM_PLAYERS; player_num++)
+  for(player_num_t player_num = 0; player_num < acting_player; player_num++)
   {
     Player player = players[player_num];
     if(player.number == acting_player)
@@ -180,7 +187,7 @@ uint32_t Limit_Holdem::next_acting_player()
 calculate valid bets.
    args: for_children: determines if this is being called to calculate the valid children of a node. If it is, it will ignore the cash stack of the player, and return all bets legal by the rules of limit poker 
 */
-std::vector<int32_t> Limit_Holdem::calculate_valid_bets(bool for_children)
+std::vector<bet_t> Limit_Holdem::calculate_valid_bets(bool for_children)
 {
   std::vector<int32_t> valid_bets;
   valid_bets.push_back(FOLD);
@@ -213,6 +220,32 @@ std::vector<int32_t> Limit_Holdem::calculate_valid_bets(bool for_children)
   return valid_bets;
 }
 
+/*
+A function to make player 0 and 1 pay their blinds. Player 0 pays a small blind, player 1 pays the big blind
+*/
+void Limit_Holdem::pay_blinds()
+{
+  if(players[0].cash < LITTLE_BLIND)
+  {
+    std::cout << "Error: player 0 is trying to play without enough cash!\n";
+    exit(1);
+  }
+  if(players[1].cash < BIG_BLIND)
+  {
+    std::cout << "Error: player 1 is trying to play without enough cash!\n";
+    exit(1);
+  }
+  
+  players[0].cash    -= LITTLE_BLIND;
+  players[0].bet     += LITTLE_BLIND;
+  pot                 += LITTLE_BLIND;
+
+  players[1].cash    -= BIG_BLIND;
+  players[1].bet     += BIG_BLIND;
+  pot                 += BIG_BLIND;
+
+  contribution = BIG_BLIND;
+}
 /*
 bet size is -1 for fold, 0 for check, and either 2 or 4
 first, calculate to total players contribution to the pot for the game.
@@ -416,8 +449,8 @@ hand_rank_t Limit_Holdem::get_hand_rank(Card * private_cards, Card * public_card
     return RANK_PAIR;
   }
 
-  *high_card = RANK_HIGH_CARD;
-  return get_high_card(sorted_cards, ALL_CARDS_SIZE);
+  *high_card = get_high_card(sorted_cards, ALL_CARDS_SIZE);
+  return RANK_HIGH_CARD;
 }
 
 bool Limit_Holdem::is_straight_flush(Card * private_cards, Card * public_cards, card_rank_t * high_card)
@@ -754,7 +787,7 @@ bool Limit_Holdem::is_pair(Card * sorted_cards, card_rank_t * high_card)
   }
 }
 
-uint32_t Limit_Holdem::get_high_card(Card * card_list, uint32_t list_size)
+card_rank_t Limit_Holdem::get_high_card(Card * card_list, uint32_t list_size)
 {
   card_rank_t max_rank = card_list[0].rank;
 

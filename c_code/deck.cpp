@@ -53,5 +53,6 @@ Card Deck::draw()
 
 void Deck::shuffle()
 {
+  srand(time(0));
   std::random_shuffle(deck, deck + DECK_SIZE);
 }
