@@ -39,6 +39,7 @@ typedef int32_t hand_rank_t;
 #define RIVER   3
 
 #define NUM_PLAYERS 3
+#define MAX_PLAYERS 6
 
 #define HAND_SIZE 2
 #define FLOP_SIZE 3

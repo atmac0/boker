@@ -13,9 +13,9 @@ int main()
   std::cout << "Starting program...\n";
   
   //uint32_t exploration_weight = sqrt(2);
-  bet_t cash_stacks[NUM_PLAYERS] = {50 * BIG_BLIND};
+  //bet_t cash_stacks[NUM_PLAYERS] = {50 * BIG_BLIND};
   
-  Limit_Holdem holdem = Limit_Holdem(cash_stacks);
+  //Limit_Holdem holdem = Limit_Holdem(cash_stacks);
 
   
   

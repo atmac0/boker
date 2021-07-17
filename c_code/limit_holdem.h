@@ -47,7 +47,7 @@ public:
 class Limit_Holdem
 {
 public:
-  Player players[NUM_PLAYERS];
+  Player players[MAX_PLAYERS];
   player_num_t acting_player;
   uint32_t players_remaining;
 
@@ -82,10 +82,10 @@ public:
 
 
   
-  Limit_Holdem(bet_t * cash_stacks)
+  Limit_Holdem(bet_t * cash_stacks, uint32_t num_players)
   {
     acting_player = 0;
-    players_remaining = NUM_PLAYERS;
+    players_remaining = num_players;
 
     pot = 0;
     contribution = 0;
@@ -99,7 +99,7 @@ public:
     game_complete = false;
     ended_in_tie  = false;
 
-    for(uint32_t i = 0; i < NUM_PLAYERS; i++)
+    for(uint32_t i = 0; i < num_players; i++)
     {
       players[i].cash = cash_stacks[i];
       players[i].number = i;

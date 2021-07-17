@@ -128,6 +128,7 @@ void Limit_Holdem::set_winner(std::vector<player_num_t> winning_players)
     if(std::find(winning_players.begin(), winning_players.end(), player_num) != winning_players.end())
     {
       players[player_num].winner = true;
+      players[player_num].cash += pot/winning_players.size(); // add the players portions of their winnings to the cash stack
     }
     else
     {
